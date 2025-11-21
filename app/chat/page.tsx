@@ -29,11 +29,22 @@ export default function ChatPage() {
         const savedAnswers = localStorage.getItem('hexaco_answers');
         const savedUserInfo = localStorage.getItem('user_info');
         const savedUserGoals = localStorage.getItem('user_goals');
+        const savedScores = localStorage.getItem('hexaco_scores'); // Pre-calculated scores for testing
 
-        if (savedAnswers && savedUserInfo && savedUserGoals) {
-            const answers = JSON.parse(savedAnswers);
-            const calculated = calculateHexacoScores(answers);
+        if (savedUserInfo && savedUserGoals) {
             const parsedUserInfo = JSON.parse(savedUserInfo);
+
+            // Use pre-calculated scores if available (for testing), otherwise calculate from answers
+            let calculated;
+            if (savedScores) {
+                calculated = JSON.parse(savedScores);
+            } else if (savedAnswers) {
+                const answers = JSON.parse(savedAnswers);
+                calculated = calculateHexacoScores(answers);
+            } else {
+                router.push('/test');
+                return;
+            }
 
             setScores(calculated);
             setUserInfo(parsedUserInfo);

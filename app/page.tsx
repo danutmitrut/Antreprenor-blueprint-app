@@ -44,6 +44,15 @@ export default function LandingPage() {
               Începe Testul Gratuit
               <ArrowRight className="ml-2 w-5 h-5" />
             </Link>
+            {/* Quick test link for development */}
+            {process.env.NODE_ENV === 'development' && (
+              <Link
+                href="/test-agent"
+                className="w-full sm:w-auto bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 text-sm font-medium py-2 px-6 rounded-full border border-yellow-500/30 transition-all flex items-center justify-center"
+              >
+                🧪 Test Rapid (Dev)
+              </Link>
+            )}
             <Link
               href="#how-it-works"
               className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white border border-white/10 text-lg font-medium py-4 px-8 rounded-full transition-all backdrop-blur-sm flex items-center justify-center"
