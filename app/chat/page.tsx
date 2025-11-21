@@ -78,11 +78,14 @@ export default function ChatPage() {
         setDebugInfo('Starting request...');
 
         try {
+            // Filter out messages with empty content (streaming placeholders)
+            const validMessages = [...messages, userMessage].filter(m => m.content && m.content.trim() !== '');
+
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content })),
+                    messages: validMessages.map(m => ({ role: m.role, content: m.content })),
                     scores,
                     userInfo,
                     userGoals
