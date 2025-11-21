@@ -302,10 +302,14 @@ export default function ChatPage() {
                                 {m.role === 'user' ? <User className="w-4 h-4 mr-2" /> : <Bot className="w-4 h-4 mr-2" />}
                                 {m.role === 'user' ? 'Tu' : 'Agent'}
                             </div>
-                            <div className={`prose ${m.role === 'user' ? 'prose-invert' : ''} max-w-none !text-slate-900 [&_*]:!text-slate-900`}>
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {m.content}
-                                </ReactMarkdown>
+                            <div className={`prose ${m.role === 'user' ? 'prose-invert' : 'prose-slate'} max-w-none`} style={{ color: m.role === 'user' ? 'white' : '#1e293b' }}>
+                                {m.content ? (
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {m.content}
+                                    </ReactMarkdown>
+                                ) : (
+                                    <span style={{ opacity: 0.5 }}>Așteptăm răspunsul...</span>
+                                )}
                             </div>
                         </div>
                     </div>

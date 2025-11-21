@@ -1,4 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { streamText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 
@@ -18,6 +17,35 @@ export async function POST(req: Request) {
             ? userGoals.join(', ')
             : (userGoals ? String(userGoals) : 'Nespecificat');
 
+        // Map English domain names to Romanian
+        const DOMAIN_MAP: Record<string, string> = {
+            "Honesty-Humility": "Onestitate-Umilință (H)",
+            "Emotionality": "Emoționalitate (E)",
+            "Extraversion": "Extraversiune (X)",
+            "Agreeableness": "Agreabilitate (A)",
+            "Conscientiousness": "Conștiinciozitate (C)",
+            "Openness to Experience": "Deschidere către Experiență (O)"
+        };
+
+        // Format HEXACO scores properly
+        const formatScores = (scores: any) => {
+            if (!scores) return 'Nu sunt disponibile';
+            let result = '\n=== FACTORI HEXACO (Scoruri medie 1-5) ===\n';
+            if (scores.factors) {
+                result += Object.entries(scores.factors).map(([factor, score]) => {
+                    const romanianName = DOMAIN_MAP[factor] || factor;
+                    return `${romanianName}: ${score}`;
+                }).join('\n');
+            }
+            result += '\n\n=== FAȚETE HEXACO (Scoruri medie 1-5) ===\n';
+            if (scores.facets) {
+                result += Object.entries(scores.facets).map(([facet, score]) =>
+                    `${facet}: ${score}`
+                ).join('\n');
+            }
+            return result;
+        };
+
         // Construim contextul utilizatorului
         const userContext = `
 DATE UTILIZATOR:
@@ -27,7 +55,7 @@ Industrie: ${userInfo?.industry}
 Obiective: ${formattedGoals}
 
 SCORURI HEXACO:
-${Object.entries(scores || {}).map(([k, v]: [string, any]) => `${k}: ${v.score} (${v.label})`).join('\n')}
+${formatScores(scores)}
 `;
 
         // Construct the system prompt with user context
@@ -47,7 +75,7 @@ OBIECTIVELE UTILIZATORULUI:
 ${userGoals ? Object.entries(userGoals).map(([k, v]) => `- ${k}: ${v}`).join('\n') : 'Nu sunt specificate'}
 
 SCORURILE HEXACO ALE UTILIZATORULUI:
-${scores ? Object.entries(scores).map(([factor, score]) => `${factor}: ${score}`).join('\n') : 'Nu sunt disponibile'}
+${formatScores(scores)}
 
 === STRUCTURA RAPORTULUI ===
 Generează un raport intitulat: "Raport de Analiză HEXACO pentru Antreprenori"
@@ -162,12 +190,19 @@ CAPITOLUL 5: Concluzii și Plan de Acțiune
 
         console.log('=== STARTING STREAM ===');
         console.log('Messages count:', messages.length);
+        console.log('User info:', JSON.stringify(userInfo));
+        console.log('Scores available:', !!scores);
+        console.log('System prompt length:', systemPrompt.length);
 
         const result = await streamText({
             model: anthropic('claude-3-5-sonnet-20241022'),
             system: systemPrompt,
             messages,
-            onFinish: () => console.log('=== STREAM FINISHED ==='),
+            onFinish: (result) => {
+                console.log('=== STREAM FINISHED ===');
+                console.log('Finish reason:', result.finishReason);
+                console.log('Text length:', result.text?.length || 0);
+            },
         });
 
         console.log('Stream created, returning response...');
