@@ -23,6 +23,7 @@ export default function ChatPage() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isReady, setIsReady] = useState(false);
+    const [debugInfo, setDebugInfo] = useState<string>('');
 
     useEffect(() => {
         const savedAnswers = localStorage.getItem('hexaco_answers');
@@ -63,6 +64,7 @@ export default function ChatPage() {
         setMessages(prev => [...prev, userMessage]);
         setInputValue('');
         setIsLoading(true);
+        setDebugInfo('Starting request...');
 
         try {
             const response = await fetch('/api/chat', {
@@ -76,8 +78,14 @@ export default function ChatPage() {
                 }),
             });
 
-            if (!response.ok) throw new Error('API request failed');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API Error: ${response.status} - ${errorText}`);
+            }
+
             if (!response.body) throw new Error('No response body');
+
+            setDebugInfo('Response received, starting stream...');
 
             // Create a placeholder message for the assistant
             const assistantMessageId = (Date.now() + 1).toString();
@@ -90,11 +98,16 @@ export default function ChatPage() {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let accumulatedContent = '';
+            let chunkCount = 0;
 
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
+                if (done) {
+                    setDebugInfo(`Stream finished. Chunks: ${chunkCount}. Total length: ${accumulatedContent.length}`);
+                    break;
+                }
 
+                chunkCount++;
                 const chunk = decoder.decode(value, { stream: true });
                 accumulatedContent += chunk;
 
@@ -105,12 +118,13 @@ export default function ChatPage() {
                 ));
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Chat error:', error);
+            setDebugInfo(`Error: ${error.message}`);
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'assistant',
-                content: '❌ A apărut o eroare. Te rog să încerci din nou.'
+                content: `❌ A apărut o eroare: ${error.message}. Te rog să încerci din nou.`
             }]);
         } finally {
             setIsLoading(false);
@@ -262,6 +276,13 @@ export default function ChatPage() {
                 </div>
             </div>
 
+            {/* Debug Info (Visible only if there's info) */}
+            {debugInfo && (
+                <div className="bg-yellow-50 border-b border-yellow-200 p-2 text-xs text-yellow-800 font-mono text-center">
+                    Debug: {debugInfo}
+                </div>
+            )}
+
             {/* Chat Area */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full">
                 {messages.map((m) => (
@@ -281,7 +302,7 @@ export default function ChatPage() {
                                 {m.role === 'user' ? <User className="w-4 h-4 mr-2" /> : <Bot className="w-4 h-4 mr-2" />}
                                 {m.role === 'user' ? 'Tu' : 'Agent'}
                             </div>
-                            <div className={`prose ${m.role === 'user' ? 'prose-invert' : 'prose-slate'} max-w-none prose-headings:text-slate-900 prose-p:text-slate-900 prose-strong:text-slate-900 prose-li:text-slate-900`}>
+                            <div className={`prose ${m.role === 'user' ? 'prose-invert' : ''} max-w-none !text-slate-900 [&_*]:!text-slate-900`}>
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {m.content}
                                 </ReactMarkdown>
