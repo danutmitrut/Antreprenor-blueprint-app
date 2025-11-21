@@ -2,11 +2,28 @@ import Anthropic from '@anthropic-ai/sdk';
 import { streamText } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 
-export const maxDuration = 300; // 5 minutes timeout for streaming
+export const maxDuration = 30; // Edge functions have different limits, but streaming helps.
+export const runtime = 'edge';
 
 export async function POST(req: Request) {
     try {
         const { messages, scores, userInfo, userGoals } = await req.json();
+
+        if (!process.env.ANTHROPIC_API_KEY) {
+            return new Response('Missing ANTHROPIC_API_KEY', { status: 401 });
+        }
+
+        // Construim contextul utilizatorului
+        const userContext = `
+DATE UTILIZATOR:
+Nume: ${userInfo?.firstName} ${userInfo?.lastName}
+Rol: ${userInfo?.role}
+Industrie: ${userInfo?.industry}
+Obiective: ${userGoals?.join(', ')}
+
+SCORURI HEXACO:
+${Object.entries(scores || {}).map(([k, v]: [string, any]) => `${k}: ${v.score} (${v.label})`).join('\n')}
+`;
 
         // Construct the system prompt with user context
         const systemPrompt = `
