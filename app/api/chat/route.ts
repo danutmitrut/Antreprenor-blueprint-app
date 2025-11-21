@@ -195,7 +195,7 @@ CAPITOLUL 5: Concluzii și Plan de Acțiune
         console.log('System prompt length:', systemPrompt.length);
 
         const result = await streamText({
-            model: anthropic('claude-3-5-sonnet-20241022'),
+            model: anthropic('claude-3-5-sonnet-latest'),
             system: systemPrompt,
             messages,
             onFinish: (result) => {
