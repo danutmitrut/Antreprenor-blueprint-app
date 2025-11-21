@@ -13,13 +13,18 @@ export async function POST(req: Request) {
             return new Response('Missing ANTHROPIC_API_KEY', { status: 401 });
         }
 
+        // Safe formatting for goals
+        const formattedGoals = Array.isArray(userGoals)
+            ? userGoals.join(', ')
+            : (userGoals ? String(userGoals) : 'Nespecificat');
+
         // Construim contextul utilizatorului
         const userContext = `
 DATE UTILIZATOR:
 Nume: ${userInfo?.firstName} ${userInfo?.lastName}
 Rol: ${userInfo?.role}
 Industrie: ${userInfo?.industry}
-Obiective: ${userGoals?.join(', ')}
+Obiective: ${formattedGoals}
 
 SCORURI HEXACO:
 ${Object.entries(scores || {}).map(([k, v]: [string, any]) => `${k}: ${v.score} (${v.label})`).join('\n')}
