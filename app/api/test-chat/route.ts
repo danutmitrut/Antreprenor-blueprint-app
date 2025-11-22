@@ -1,4 +1,4 @@
-import { anthropic } from '@ai-sdk/anthropic';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
 
 export const maxDuration = 60;
@@ -7,6 +7,15 @@ export async function POST(req: Request) {
     try {
         console.log('=== TEST API ===');
         console.log('API Key:', process.env.ANTHROPIC_API_KEY?.substring(0, 20) + '...');
+
+        if (!process.env.ANTHROPIC_API_KEY) {
+            return new Response('Missing ANTHROPIC_API_KEY', { status: 401 });
+        }
+
+        // Create Anthropic provider with explicit API key
+        const anthropic = createAnthropic({
+            apiKey: process.env.ANTHROPIC_API_KEY
+        });
 
         const result = streamText({
             model: anthropic('claude-3-5-sonnet-20241022'),
