@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-12-18.acacia' as any, // Cast to any to avoid type mismatch with older types package
-});
-
 export async function POST(req: Request) {
     try {
+        // Initialize Stripe inside handler to avoid build-time errors
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+            apiVersion: '2024-12-18.acacia' as any,
+        });
+
         const { email, name } = await req.json();
 
         // Create Checkout Session
