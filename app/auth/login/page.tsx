@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase';
 import { Loader2, AlertCircle, LogIn } from 'lucide-react';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
     const router = useRouter();
     const supabase = createClient();

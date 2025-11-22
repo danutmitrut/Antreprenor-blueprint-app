@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase';
 import { Loader2, AlertCircle, Mail, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default function ForgotPasswordPage() {
     const supabase = createClient();
 

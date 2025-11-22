@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { Loader2, AlertCircle, Lock, Check } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function UpdatePasswordPage() {
     const router = useRouter();
     const supabase = createClient();

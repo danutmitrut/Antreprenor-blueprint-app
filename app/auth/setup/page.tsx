@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { Check, Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Check, Lock } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 
 function SetupAccountContent() {
     const searchParams = useSearchParams();
