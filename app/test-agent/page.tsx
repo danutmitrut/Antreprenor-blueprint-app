@@ -48,10 +48,12 @@ export default function TestAgentPage() {
         const mockUserInfo = {
             firstName: "Ion",
             lastName: "Luca",
+            email: "ion.luca@example.com",
             age: 35,
             gender: "Masculin",
-            experience: 8,
+            occupation: "Fondator & CEO",
             industry: "IT & Software",
+            experience: 8,
             role: "Fondator & CEO"
         };
 

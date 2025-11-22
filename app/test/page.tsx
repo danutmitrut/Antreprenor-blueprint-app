@@ -11,6 +11,7 @@ export default function TestPage() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [isLoaded, setIsLoaded] = useState(false);
+    const [isCompleted, setIsCompleted] = useState(false);
 
     // Load progress from localStorage
     useEffect(() => {
@@ -38,14 +39,20 @@ export default function TestPage() {
     }, [answers, isLoaded]);
 
     const currentQuestion = HEXACO_QUESTIONS[currentQuestionIndex];
-    const progress = ((Object.keys(answers).length) / HEXACO_QUESTIONS.length) * 100;
+    const answeredCount = Object.keys(answers).length;
+    const progress = (answeredCount / HEXACO_QUESTIONS.length) * 100;
     const isLastQuestion = currentQuestionIndex === HEXACO_QUESTIONS.length - 1;
 
     const handleAnswer = (value: number) => {
         setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }));
 
-        // Auto-advance after a short delay if not the last question
-        if (!isLastQuestion) {
+        // If this is the last question, mark as completed
+        if (isLastQuestion) {
+            setTimeout(() => {
+                setIsCompleted(true);
+            }, 300);
+        } else {
+            // Auto-advance after a short delay if not the last question
             setTimeout(() => {
                 setCurrentQuestionIndex(prev => prev + 1);
             }, 250);
@@ -86,6 +93,7 @@ export default function TestPage() {
                 </div>
                 <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <motion.div
+                        key={Object.keys(answers).length === 0 ? 'reset' : 'progress'}
                         className="h-full bg-primary"
                         initial={{ width: 0 }}
                         animate={{ width: `${progress}%` }}
@@ -95,73 +103,94 @@ export default function TestPage() {
             </div>
 
             {/* Question Card */}
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 md:p-12 min-h-[400px] flex flex-col justify-between relative overflow-hidden">
-                <AnimatePresence mode="wait">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 md:p-12 min-h-[400px] flex flex-col justify-center relative overflow-hidden">
+                {isCompleted ? (
+                    /* Completion Screen */
                     <motion.div
-                        key={currentQuestion.id}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className="flex-grow flex flex-col justify-center"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4 }}
+                        className="text-center"
                     >
-                        <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-8 leading-tight text-center">
-                            {currentQuestion.text}
-                        </h2>
-
-                        {/* Options */}
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                            {[1, 2, 3, 4, 5].map((value) => (
-                                <button
-                                    key={value}
-                                    onClick={() => handleAnswer(value)}
-                                    className={`
-                    py-4 px-2 rounded-xl border-2 transition-all duration-200 font-medium text-sm md:text-base
-                    ${answers[currentQuestion.id] === value
-                                            ? 'border-primary bg-primary/10 text-primary shadow-md scale-105'
-                                            : 'border-slate-100 hover:border-primary/50 hover:bg-slate-50 text-slate-600'}
-                  `}
-                                >
-                                    {value === 1 && "Dezacord Puternic"}
-                                    {value === 2 && "Dezacord"}
-                                    {value === 3 && "Neutru"}
-                                    {value === 4 && "Acord"}
-                                    {value === 5 && "Acord Puternic"}
-                                </button>
-                            ))}
+                        <div className="mb-8">
+                            <CheckCircle className="w-20 h-20 text-success mx-auto mb-6" />
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+                                Felicitări!
+                            </h2>
+                            <p className="text-lg text-slate-600">
+                                Ai completat toate întrebările.
+                            </p>
                         </div>
-                    </motion.div>
-                </AnimatePresence>
 
-                {/* Navigation */}
-                <div className="flex justify-between mt-12 pt-6 border-t border-slate-100">
-                    <button
-                        onClick={handlePrev}
-                        disabled={currentQuestionIndex === 0}
-                        className="flex items-center text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-colors"
-                    >
-                        <ChevronLeft className="w-5 h-5 mr-1" />
-                        Anterior
-                    </button>
-
-                    {isLastQuestion ? (
                         <button
                             onClick={finishTest}
-                            className="flex items-center bg-success hover:bg-success-dark text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+                            className="inline-flex items-center bg-success hover:bg-success-dark text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
                         >
                             Generează Fișa
-                            <CheckCircle className="w-5 h-5 ml-2" />
+                            <CheckCircle className="w-6 h-6 ml-3" />
                         </button>
-                    ) : (
-                        <button
-                            onClick={handleNext}
-                            className="flex items-center text-primary hover:text-primary-dark font-medium transition-colors"
-                        >
-                            Următorul
-                            <ChevronRight className="w-5 h-5 ml-1" />
-                        </button>
-                    )}
-                </div>
+                    </motion.div>
+                ) : (
+                    /* Question Screen */
+                    <>
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentQuestion.id}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                                className="flex-grow flex flex-col justify-center"
+                            >
+                                <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 mb-8 leading-tight text-center">
+                                    {currentQuestion.text}
+                                </h2>
+
+                                {/* Options */}
+                                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                                    {[1, 2, 3, 4, 5].map((value) => (
+                                        <button
+                                            key={value}
+                                            onClick={() => handleAnswer(value)}
+                                            className={`
+                            py-4 px-2 rounded-xl border-2 transition-all duration-200 font-medium text-sm md:text-base
+                            ${answers[currentQuestion.id] === value
+                                                    ? 'border-primary bg-primary/10 text-primary shadow-md scale-105'
+                                                    : 'border-slate-100 hover:border-primary/50 hover:bg-slate-50 text-slate-600'}
+                          `}
+                                        >
+                                            {value === 1 && "Dezacord Puternic"}
+                                            {value === 2 && "Dezacord"}
+                                            {value === 3 && "Neutru"}
+                                            {value === 4 && "Acord"}
+                                            {value === 5 && "Acord Puternic"}
+                                        </button>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        </AnimatePresence>
+
+                        {/* Navigation */}
+                        <div className="flex justify-between mt-12 pt-6 border-t border-slate-100">
+                            <button
+                                onClick={handlePrev}
+                                disabled={currentQuestionIndex === 0}
+                                className="flex items-center text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-colors"
+                            >
+                                <ChevronLeft className="w-5 h-5 mr-1" />
+                                Anterior
+                            </button>
+
+                            <button
+                                onClick={handleNext}
+                                className="flex items-center text-primary hover:text-primary-dark font-medium transition-colors"
+                            >
+                                Următorul
+                                <ChevronRight className="w-5 h-5 ml-1" />
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

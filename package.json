@@ -10,8 +10,12 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.45",
+    "@ai-sdk/google": "^2.0.40",
+    "@ai-sdk/openai": "^2.0.71",
     "@ai-sdk/react": "^2.0.98",
     "@anthropic-ai/sdk": "^0.70.1",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.84.0",
     "@types/file-saver": "^2.0.7",
     "ai": "^5.0.98",
     "clsx": "^2.1.1",
@@ -25,6 +29,7 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.4.1",
     "remark-gfm": "^4.0.1",
+    "stripe": "^20.0.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

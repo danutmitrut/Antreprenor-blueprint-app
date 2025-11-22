@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, ArrowLeft, User, Mail, Calendar, Users } from 'lucide-react';
+import { ArrowRight, ArrowLeft, User, Mail, Calendar, Users, Briefcase, Building2 } from 'lucide-react';
 
 export default function StartPage() {
     const router = useRouter();
@@ -11,20 +11,52 @@ export default function StartPage() {
         lastName: '',
         email: '',
         age: '',
-        gender: ''
+        gender: '',
+        occupation: '',
+        industry: ''
     });
+
+    const [error, setError] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
 
-        // Validare
-        if (!formData.firstName || !formData.lastName || !formData.email || !formData.age || !formData.gender) {
-            alert('Te rugăm să completezi toate câmpurile.');
+        // Validare câmpuri goale
+        if (!formData.firstName || !formData.lastName || !formData.email || !formData.age || !formData.gender || !formData.occupation || !formData.industry) {
+            setError('Te rugăm să completezi toate câmpurile obligatorii.');
+            return;
+        }
+
+        // Validare email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            setError('Te rugăm să introduci o adresă de email validă.');
+            return;
+        }
+
+        // Validare lungime minimă (evitare input-uri gen "1", ".", etc.)
+        if (formData.firstName.length < 2 || formData.lastName.length < 2 || formData.occupation.length < 2 || formData.industry.length < 2) {
+            setError('Te rugăm să introduci date valide (nume, ocupație, domeniu - minim 2 caractere).');
+            return;
+        }
+
+        // Validare vârstă
+        const ageNum = parseInt(formData.age);
+        if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
+            setError('Te rugăm să introduci o vârstă validă (18-100 ani).');
             return;
         }
 
         // Salvează în localStorage
         localStorage.setItem('user_info', JSON.stringify(formData));
+
+        // Trimite datele către MailerLite (fără a bloca utilizatorul)
+        fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        }).catch(err => console.error('MailerLite error:', err));
 
         // Redirect la obiective
         router.push('/obiective');
@@ -52,6 +84,18 @@ export default function StartPage() {
                 {/* Form Card */}
                 <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Error Alert */}
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                <div className="mt-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <p className="text-sm font-medium">{error}</p>
+                            </div>
+                        )}
+
                         {/* Nume */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -98,6 +142,39 @@ export default function StartPage() {
                                 placeholder="ion.popescu@exemplu.ro"
                                 required
                             />
+                        </div>
+
+                        {/* Ocupație și Domeniu */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <Briefcase className="w-4 h-4 inline mr-2" />
+                                    Ocupație *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.occupation}
+                                    onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                                    placeholder="Ex: Fondator & CEO"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <Building2 className="w-4 h-4 inline mr-2" />
+                                    Domeniu de activitate *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.industry}
+                                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                                    placeholder="Ex: IT & Software"
+                                    required
+                                />
+                            </div>
                         </div>
 
                         {/* Vârstă */}

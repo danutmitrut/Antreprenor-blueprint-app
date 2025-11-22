@@ -12,6 +12,7 @@ export default function ObjectivesPage() {
         expectations: ''
     });
     const [userInfo, setUserInfo] = useState<any>(null);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         // Verifică dacă datele personale au fost completate
@@ -25,15 +26,26 @@ export default function ObjectivesPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
 
         // Validare
         if (!formData.mainGoal || !formData.mainObstacle || !formData.expectations) {
-            alert('Te rugăm să răspunzi la toate cele 3 întrebări.');
+            setError('Te rugăm să răspunzi la toate cele 3 întrebări pentru a putea genera o analiză completă.');
+            return;
+        }
+
+        // Validare lungime minimă (pentru a evita răspunsuri gen "da", "nu")
+        if (formData.mainGoal.length < 10 || formData.mainObstacle.length < 10 || formData.expectations.length < 10) {
+            setError('Te rugăm să oferi răspunsuri puțin mai detaliate (minim 10 caractere) pentru a ajuta AI-ul să te înțeleagă.');
             return;
         }
 
         // Salvează în localStorage
         localStorage.setItem('user_goals', JSON.stringify(formData));
+
+        // Șterge răspunsurile vechi pentru a începe testul curat
+        localStorage.removeItem('hexaco_answers');
+        localStorage.removeItem('hexaco_scores');
 
         // Redirect la test
         router.push('/test');
@@ -65,6 +77,18 @@ export default function ObjectivesPage() {
                 {/* Form Card */}
                 <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
                     <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* Error Alert */}
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                <div className="mt-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <p className="text-sm font-medium">{error}</p>
+                            </div>
+                        )}
+
                         {/* Întrebarea 1 */}
                         <div>
                             <label className="block text-lg font-bold text-slate-900 mb-3">
