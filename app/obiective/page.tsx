@@ -34,9 +34,36 @@ export default function ObjectivesPage() {
             return;
         }
 
-        // Validare lungime minimă (pentru a evita răspunsuri gen "da", "nu")
-        if (formData.mainGoal.length < 10 || formData.mainObstacle.length < 10 || formData.expectations.length < 10) {
-            setError('Te rugăm să oferi răspunsuri puțin mai detaliate (minim 10 caractere) pentru a ajuta AI-ul să te înțeleagă.');
+        // Validare lungime minimă - 2 propoziții (aproximativ 80 caractere)
+        if (formData.mainGoal.length < 80 || formData.mainObstacle.length < 80 || formData.expectations.length < 80) {
+            setError('Te rugăm să oferi răspunsuri mai detaliate (minim 2 propoziții complete, aproximativ 80 caractere) pentru fiecare întrebare.');
+            return;
+        }
+
+        // Validare doar cifre sau semne (nu permite răspunsuri gen "123...", "!!")
+        const invalidTextRegex = /^[\d\s\W]+$/;
+        if (invalidTextRegex.test(formData.mainGoal) || invalidTextRegex.test(formData.mainObstacle) ||
+            invalidTextRegex.test(formData.expectations)) {
+            setError('Te rugăm să oferi răspunsuri în text coerent (litere) - nu doar cifre sau semne de punctuație.');
+            return;
+        }
+
+        // Validare minim cuvinte cu litere (cel puțin 10 cuvinte de minim 2 litere)
+        const wordCountRegex = /[a-zA-ZăâîșțĂÂÎȘȚ]{2,}/g;
+        const mainGoalWords = (formData.mainGoal.match(wordCountRegex) || []).length;
+        const mainObstacleWords = (formData.mainObstacle.match(wordCountRegex) || []).length;
+        const expectationsWords = (formData.expectations.match(wordCountRegex) || []).length;
+
+        if (mainGoalWords < 10 || mainObstacleWords < 10 || expectationsWords < 10) {
+            setError('Te rugăm să oferi răspunsuri mai complete (minim 10 cuvinte semnificative) pentru fiecare întrebare.');
+            return;
+        }
+
+        // Validare punctuație finală (cel puțin un punct, virgulă sau semn de exclamație)
+        const hasPunctuationRegex = /[.!?,;]/;
+        if (!hasPunctuationRegex.test(formData.mainGoal) || !hasPunctuationRegex.test(formData.mainObstacle) ||
+            !hasPunctuationRegex.test(formData.expectations)) {
+            setError('Te rugăm să scrii în propoziții complete cu punctuație corespunzătoare.');
             return;
         }
 

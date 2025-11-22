@@ -41,6 +41,22 @@ export default function StartPage() {
             return;
         }
 
+        // Validare doar cifre sau semne de punctuație (nu permite ".", "123", "!!")
+        const invalidTextRegex = /^[\d\s\W]+$/; // Doar cifre, spații și non-word chars
+        if (invalidTextRegex.test(formData.firstName) || invalidTextRegex.test(formData.lastName) ||
+            invalidTextRegex.test(formData.occupation) || invalidTextRegex.test(formData.industry)) {
+            setError('Te rugăm să introduci text valid (litere) pentru nume, ocupație și domeniu - nu doar cifre sau semne de punctuație.');
+            return;
+        }
+
+        // Validare minim litere (cel puțin 2 litere în text)
+        const minLettersRegex = /[a-zA-ZăâîșțĂÂÎȘȚ]{2,}/;
+        if (!minLettersRegex.test(formData.firstName) || !minLettersRegex.test(formData.lastName) ||
+            !minLettersRegex.test(formData.occupation) || !minLettersRegex.test(formData.industry)) {
+            setError('Te rugăm să introduci cel puțin 2 litere consecutive în fiecare câmp text.');
+            return;
+        }
+
         // Validare vârstă
         const ageNum = parseInt(formData.age);
         if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
