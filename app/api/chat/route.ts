@@ -1,5 +1,5 @@
 import { streamText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { createClient } from '@supabase/supabase-js';
 
 export const maxDuration = 30; // Edge functions have different limits, but streaming helps.
@@ -56,6 +56,11 @@ export async function POST(req: Request) {
         if (!process.env.ANTHROPIC_API_KEY) {
             return new Response('Missing ANTHROPIC_API_KEY', { status: 401 });
         }
+
+        // Create Anthropic provider with explicit API key
+        const anthropic = createAnthropic({
+            apiKey: process.env.ANTHROPIC_API_KEY
+        });
 
         // Safe formatting for goals
         const formattedGoals = Array.isArray(userGoals)
