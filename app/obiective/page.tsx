@@ -48,14 +48,14 @@ export default function ObjectivesPage() {
             return;
         }
 
-        // Validare minim cuvinte cu litere (cel puțin 10 cuvinte de minim 2 litere)
+        // Validare minim cuvinte cu litere (cel puțin 4 cuvinte de minim 2 litere)
         const wordCountRegex = /[a-zA-ZăâîșțĂÂÎȘȚ]{2,}/g;
         const mainGoalWords = (formData.mainGoal.match(wordCountRegex) || []).length;
         const mainObstacleWords = (formData.mainObstacle.match(wordCountRegex) || []).length;
         const expectationsWords = (formData.expectations.match(wordCountRegex) || []).length;
 
-        if (mainGoalWords < 10 || mainObstacleWords < 10 || expectationsWords < 10) {
-            setError('Te rugăm să oferi răspunsuri mai complete (minim 10 cuvinte semnificative) pentru fiecare întrebare.');
+        if (mainGoalWords < 4 || mainObstacleWords < 4 || expectationsWords < 4) {
+            setError('Te rugăm să oferi răspunsuri mai complete (minim 4 cuvinte semnificative) pentru fiecare întrebare.');
             return;
         }
 
