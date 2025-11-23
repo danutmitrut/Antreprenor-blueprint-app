@@ -19,38 +19,33 @@ export async function POST(req: Request) {
         // Get IP (simplified for Next.js)
         const ip = req.headers.get('x-forwarded-for') || 'unknown';
 
-        // Check if user has a valid subscription
-        // If userInfo.email is present, we could check DB.
-        // For now, we assume if they are here without being logged in (no auth header), they are Free.
-        // Ideally, we check Supabase Auth session.
+        // Only count NEW reports (when conversation starts), not chapter continuations
+        // A new report is when messages array has <= 2 messages (greeting + first user question)
+        const isNewReport = messages.length <= 2;
 
-        // Simple IP check: 1 report per 24h
-        const ONE_DAY_AGO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        if (isNewReport) {
+            // Check if user has a valid subscription
+            // For now, we check IP-based limits for free tier
+            const ONE_DAY_AGO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-        const { count, error: countError } = await supabase
-            .from('rate_limits')
-            .select('*', { count: 'exact', head: true })
-            .eq('ip_address', ip)
-            .eq('endpoint', '/api/chat')
-            .gte('created_at', ONE_DAY_AGO);
+            const { count, error: countError } = await supabase
+                .from('rate_limits')
+                .select('*', { count: 'exact', head: true })
+                .eq('ip_address', ip)
+                .eq('endpoint', '/api/chat')
+                .gte('created_at', ONE_DAY_AGO);
 
-        if (count && count >= 1) {
-            // Allow if user is premium (check DB by email if available)
-            // For MVP: Strict IP limit for everyone not authenticated
-            // If you want to allow unlimited for paid, we need to verify auth token here.
-
-            // Let's assume for now we just log it and maybe block.
-            // To be safe for the demo, let's set limit to 3.
-            if (count >= 3) {
-                return new Response("Ai atins limita de rapoarte gratuite pe 24h.", { status: 429 });
+            // Free tier: 3 complete reports per 24h
+            if (count && count >= 3) {
+                return new Response("Ai atins limita de rapoarte gratuite pe 24h. Te rog să faci upgrade pentru rapoarte nelimitate.", { status: 429 });
             }
-        }
 
-        // Log this request
-        await supabase.from('rate_limits').insert({
-            ip_address: ip,
-            endpoint: '/api/chat'
-        });
+            // Log this NEW report
+            await supabase.from('rate_limits').insert({
+                ip_address: ip,
+                endpoint: '/api/chat'
+            });
+        }
         // --- RATE LIMITING END ---
 
         if (!process.env.ANTHROPIC_API_KEY) {
