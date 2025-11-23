@@ -23,6 +23,11 @@ export async function POST(req: Request) {
         // A new report is when messages array has <= 2 messages (greeting + first user question)
         const isNewReport = messages.length <= 2;
 
+        console.log('=== RATE LIMITING DEBUG ===');
+        console.log('IP:', ip);
+        console.log('Messages length:', messages.length);
+        console.log('Is new report:', isNewReport);
+
         if (isNewReport) {
             // Check if user has a valid subscription
             // For now, we check IP-based limits for free tier
@@ -35,16 +40,24 @@ export async function POST(req: Request) {
                 .eq('endpoint', '/api/chat')
                 .gte('created_at', ONE_DAY_AGO);
 
+            console.log('Rate limit count in last 24h:', count);
+            console.log('Count error:', countError);
+
             // Free tier: 3 complete reports per 24h
             if (count && count >= 3) {
+                console.log('⛔ RATE LIMIT EXCEEDED - Blocking request');
                 return new Response("Ai atins limita de rapoarte gratuite pe 24h. Te rog să faci upgrade pentru rapoarte nelimitate.", { status: 429 });
             }
 
             // Log this NEW report
-            await supabase.from('rate_limits').insert({
+            console.log('✅ Logging new report to rate_limits table');
+            const { error: insertError } = await supabase.from('rate_limits').insert({
                 ip_address: ip,
                 endpoint: '/api/chat'
             });
+            console.log('Insert error:', insertError);
+        } else {
+            console.log('⏭️ Skipping rate limit (chapter continuation)');
         }
         // --- RATE LIMITING END ---
 
