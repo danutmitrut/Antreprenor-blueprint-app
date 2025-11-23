@@ -38,6 +38,19 @@ export default function TestPage() {
         }
     }, [answers, isLoaded]);
 
+    // Check if test is completed when answers change
+    useEffect(() => {
+        const answeredCount = Object.keys(answers).length;
+        const allAnswered = answeredCount === HEXACO_QUESTIONS.length;
+
+        // Only set completed if we're on the last question and all are answered
+        if (allAnswered && currentQuestionIndex === HEXACO_QUESTIONS.length - 1 && !isCompleted) {
+            setTimeout(() => {
+                setIsCompleted(true);
+            }, 400);
+        }
+    }, [answers, currentQuestionIndex, isCompleted]);
+
     const currentQuestion = HEXACO_QUESTIONS[currentQuestionIndex];
     const answeredCount = Object.keys(answers).length;
     const progress = (answeredCount / HEXACO_QUESTIONS.length) * 100;
@@ -45,22 +58,17 @@ export default function TestPage() {
 
     const handleAnswer = (value: number) => {
         const newAnswers = { ...answers, [currentQuestion.id]: value };
+
+        // Update answers state
         setAnswers(newAnswers);
 
-        // Check if ALL questions are now answered (including this one)
-        const allAnswered = Object.keys(newAnswers).length === HEXACO_QUESTIONS.length;
-
-        // If this is the last question AND all questions are answered, mark as completed
-        if (isLastQuestion && allAnswered) {
-            setTimeout(() => {
-                setIsCompleted(true);
-            }, 300);
-        } else if (!isLastQuestion) {
-            // Auto-advance after a short delay if not the last question
+        // Auto-advance to next question if not on the last one
+        if (!isLastQuestion) {
             setTimeout(() => {
                 setCurrentQuestionIndex(prev => prev + 1);
             }, 250);
         }
+        // Note: Completion is handled by the useEffect above
     };
 
     const handleNext = () => {
