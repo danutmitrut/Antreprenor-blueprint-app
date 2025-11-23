@@ -44,14 +44,18 @@ export default function TestPage() {
     const isLastQuestion = currentQuestionIndex === HEXACO_QUESTIONS.length - 1;
 
     const handleAnswer = (value: number) => {
-        setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }));
+        const newAnswers = { ...answers, [currentQuestion.id]: value };
+        setAnswers(newAnswers);
 
-        // If this is the last question, mark as completed
-        if (isLastQuestion) {
+        // Check if ALL questions are now answered (including this one)
+        const allAnswered = Object.keys(newAnswers).length === HEXACO_QUESTIONS.length;
+
+        // If this is the last question AND all questions are answered, mark as completed
+        if (isLastQuestion && allAnswered) {
             setTimeout(() => {
                 setIsCompleted(true);
             }, 300);
-        } else {
+        } else if (!isLastQuestion) {
             // Auto-advance after a short delay if not the last question
             setTimeout(() => {
                 setCurrentQuestionIndex(prev => prev + 1);
@@ -74,6 +78,13 @@ export default function TestPage() {
     };
 
     const finishTest = () => {
+        // If showing completion screen, just navigate (no validation needed)
+        if (isCompleted) {
+            router.push('/rezultate');
+            return;
+        }
+
+        // Otherwise, validate
         if (Object.keys(answers).length < HEXACO_QUESTIONS.length) {
             alert('Te rugăm să răspunzi la toate întrebările înainte de a finaliza.');
             return;
