@@ -1,15 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase';
-import { Loader2, AlertCircle, Mail, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
 export default function ForgotPasswordPage() {
-    const supabase = createClient();
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
@@ -22,11 +19,19 @@ export default function ForgotPasswordPage() {
         setSuccess(false);
 
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/auth/update-password`,
+            const response = await fetch('/api/auth/forgot-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
             });
 
-            if (error) throw error;
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Eroare la trimiterea email-ului');
+            }
 
             setSuccess(true);
         } catch (err: any) {
@@ -37,20 +42,23 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-100 p-4">
             <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-                <Link href="/auth/login" className="flex items-center text-slate-500 hover:text-slate-800 mb-6 text-sm transition-colors">
-                    <ArrowLeft className="w-4 h-4 mr-1" />
+                <Link
+                    href="/auth/login"
+                    className="flex items-center text-slate-600 hover:text-slate-900 mb-6 text-sm transition-colors group"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
                     Înapoi la Login
                 </Link>
 
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Mail className="w-8 h-8 text-amber-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Mail className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-900 mb-2">Recuperare Parolă</h1>
+                    <h1 className="text-2xl font-bold text-slate-900 mb-2">Ai uitat parola?</h1>
                     <p className="text-slate-600">
-                        Introduce email-ul pentru a primi instrucțiunile de resetare.
+                        Introduce adresa ta de email și îți vom trimite instrucțiuni pentru resetare.
                     </p>
                 </div>
 
@@ -62,20 +70,33 @@ export default function ForgotPasswordPage() {
                 )}
 
                 {success ? (
-                    <div className="bg-green-50 text-green-700 p-4 rounded-lg text-center mb-6">
-                        <p className="font-medium">Email trimis!</p>
-                        <p className="text-sm mt-1">Verifică inbox-ul (și spam) pentru link-ul de resetare.</p>
+                    <div className="space-y-4">
+                        <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg text-center">
+                            <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-600" />
+                            <p className="font-semibold text-lg mb-1">Email trimis cu succes!</p>
+                            <p className="text-sm">
+                                Verifică inbox-ul (și folder-ul spam) pentru link-ul de resetare a parolei.
+                            </p>
+                        </div>
+                        <Link
+                            href="/auth/login"
+                            className="block text-center text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        >
+                            Înapoi la Login
+                        </Link>
                     </div>
                 ) : (
                     <form onSubmit={handleReset} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Adresa de Email
+                            </label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 outline-none transition-all"
                                 placeholder="email@exemplu.com"
                             />
                         </div>
@@ -83,12 +104,12 @@ export default function ForgotPasswordPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold py-3 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
                             {loading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
-                                'Trimite Link-ul'
+                                'Trimite Link de Resetare'
                             )}
                         </button>
                     </form>

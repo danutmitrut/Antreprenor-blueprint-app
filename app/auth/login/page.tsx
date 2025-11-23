@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
 import { Loader2, AlertCircle, LogIn } from 'lucide-react';
 import Link from 'next/link';
 
@@ -10,7 +9,6 @@ export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
     const router = useRouter();
-    const supabase = createClient();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -23,14 +21,25 @@ export default function LoginPage() {
         setError('');
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
             });
 
-            if (error) throw error;
+            const data = await response.json();
 
-            router.push('/chat');
+            if (!response.ok) {
+                throw new Error(data.error || 'Eroare la autentificare');
+            }
+
+            // Save JWT token to localStorage
+            localStorage.setItem('auth_token', data.token);
+
+            // Redirect to dashboard
+            router.push('/dashboard');
         } catch (err: any) {
             setError(err.message || 'Eroare la autentificare.');
         } finally {
@@ -39,15 +48,15 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
             <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <LogIn className="w-8 h-8 text-blue-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <LogIn className="w-8 h-8 text-white" />
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900 mb-2">Bine ai revenit!</h1>
                     <p className="text-slate-600">
-                        Loghează-te pentru a accesa Antreprenor Blueprint.
+                        Loghează-te pentru a accesa dashboard-ul tău.
                     </p>
                 </div>
 
@@ -66,7 +75,7 @@ export default function LoginPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                            className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
                             placeholder="email@exemplu.com"
                         />
                     </div>
@@ -77,25 +86,38 @@ export default function LoginPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all"
+                            className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-slate-900 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all"
+                            placeholder="••••••••"
                         />
+                    </div>
+
+                    <div className="text-right">
+                        <Link
+                            href="/auth/forgot-password"
+                            className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                        >
+                            Ai uitat parola?
+                        </Link>
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 rounded-lg shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                         {loading ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
                         ) : (
-                            'Logare'
+                            'Intră în cont'
                         )}
                     </button>
                 </form>
 
-                <div className="mt-6 text-center text-sm text-slate-500">
-                    Nu ai cont? <Link href="/" className="text-primary hover:underline">Începe testul gratuit</Link>
+                <div className="mt-6 text-center text-sm text-slate-600">
+                    Nu ai cont încă?{' '}
+                    <Link href="/start" className="text-blue-600 hover:text-blue-700 font-semibold hover:underline">
+                        Începe testul HEXACO
+                    </Link>
                 </div>
             </div>
         </div>

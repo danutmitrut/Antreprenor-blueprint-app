@@ -16,46 +16,74 @@ export async function POST(req: Request) {
         );
 
         // --- RATE LIMITING START ---
-        // Get IP (simplified for Next.js)
-        const ip = req.headers.get('x-forwarded-for') || 'unknown';
-
         // Only count NEW reports (when conversation starts), not chapter continuations
         // A new report is when messages array has <= 2 messages (greeting + first user question)
         const isNewReport = messages.length <= 2;
 
         console.log('=== RATE LIMITING DEBUG ===');
-        console.log('IP:', ip);
         console.log('Messages length:', messages.length);
         console.log('Is new report:', isNewReport);
 
         if (isNewReport) {
-            // Check if user has a valid subscription
-            // For now, we check IP-based limits for free tier
-            const ONE_DAY_AGO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            // Check for JWT token (authenticated user)
+            const authHeader = req.headers.get('Authorization');
+            let userId = null;
+            let hasActiveSubscription = false;
 
-            const { count, error: countError } = await supabase
-                .from('rate_limits')
-                .select('*', { count: 'exact', head: true })
-                .eq('ip_address', ip)
-                .eq('endpoint', '/api/chat')
-                .gte('created_at', ONE_DAY_AGO);
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                const token = authHeader.substring(7);
 
-            console.log('Rate limit count in last 24h:', count);
-            console.log('Count error:', countError);
+                // Dynamically import auth utilities to avoid edge runtime issues
+                const { verifyToken, hasActiveSubscription: checkSubscription } = await import('@/lib/auth');
 
-            // Free tier: 3 complete reports per 24h
-            if (count && count >= 3) {
-                console.log('⛔ RATE LIMIT EXCEEDED - Blocking request');
-                return new Response("Ai atins limita de rapoarte gratuite pe 24h. Te rog să faci upgrade pentru rapoarte nelimitate.", { status: 429 });
+                const payload = verifyToken(token);
+                if (payload) {
+                    userId = payload.userId;
+                    hasActiveSubscription = await checkSubscription(userId);
+                    console.log('✅ Authenticated user:', userId);
+                    console.log('Has active subscription:', hasActiveSubscription);
+                }
             }
 
-            // Log this NEW report
-            console.log('✅ Logging new report to rate_limits table');
-            const { error: insertError } = await supabase.from('rate_limits').insert({
-                ip_address: ip,
-                endpoint: '/api/chat'
-            });
-            console.log('Insert error:', insertError);
+            // If user has active subscription, skip rate limiting
+            if (hasActiveSubscription) {
+                console.log('✅ Active subscription - bypassing rate limit');
+            } else {
+                // Free tier: check IP-based rate limits
+                const ip = req.headers.get('x-forwarded-for') || 'unknown';
+                const ONE_DAY_AGO = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+                console.log('❌ No active subscription - checking IP rate limit');
+                console.log('IP:', ip);
+
+                const { count, error: countError } = await supabase
+                    .from('rate_limits')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('ip_address', ip)
+                    .eq('endpoint', '/api/chat')
+                    .gte('created_at', ONE_DAY_AGO);
+
+                console.log('Rate limit count in last 24h:', count);
+                console.log('Count error:', countError);
+
+                // Free tier: 3 complete reports per 24h
+                if (count && count >= 3) {
+                    console.log('⛔ RATE LIMIT EXCEEDED - Blocking request');
+                    return new Response(
+                        "Ai atins limita de rapoarte gratuite pe 24h. Abonează-te pentru a beneficia de Board Member AI, Memorie Infinită și Evoluție Continuă.",
+                        { status: 429 }
+                    );
+                }
+
+                // Log this NEW report for free tier
+                console.log('✅ Logging new report to rate_limits table');
+                const { error: insertError } = await supabase.from('rate_limits').insert({
+                    ip_address: ip,
+                    endpoint: '/api/chat',
+                    user_id: userId, // Optional: link to user if authenticated
+                });
+                console.log('Insert error:', insertError);
+            }
         } else {
             console.log('⏭️ Skipping rate limit (chapter continuation)');
         }
