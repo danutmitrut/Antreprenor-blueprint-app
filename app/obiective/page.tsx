@@ -34,9 +34,9 @@ export default function ObjectivesPage() {
             return;
         }
 
-        // Validare lungime minimă - 2 propoziții (aproximativ 80 caractere)
-        if (formData.mainGoal.length < 80 || formData.mainObstacle.length < 80 || formData.expectations.length < 80) {
-            setError('Te rugăm să oferi răspunsuri mai detaliate (minim 2 propoziții complete, aproximativ 80 caractere) pentru fiecare întrebare.');
+        // Validare lungime minimă - 30 caractere
+        if (formData.mainGoal.length < 30 || formData.mainObstacle.length < 30 || formData.expectations.length < 30) {
+            setError('Te rugăm să oferi răspunsuri mai detaliate (minim 30 caractere) pentru fiecare întrebare.');
             return;
         }
 
