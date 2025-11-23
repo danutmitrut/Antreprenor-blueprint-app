@@ -182,15 +182,20 @@ export default function ChatPage() {
                 ));
             }
 
-            // Trigger subscription offer after report generation
-            // This condition checks if it's the first assistant message after the initial greeting
-            const assistantMessagesCount = messages.filter(m => m.role === 'assistant').length;
-            if (assistantMessagesCount === 1 && !isReportComplete) {
-                // Delay increased to 6 seconds to allow user to read the "Save" instruction
+            // Trigger subscription offer after FULL report generation (all 5 chapters)
+            // Check if the report is complete by detecting Chapter V completion
+            const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant');
+            const isFullReportComplete = lastAssistantMessage?.content?.includes('Capitolul al V-lea') ||
+                                         lastAssistantMessage?.content?.includes('CAPITOLUL AL V-LEA') ||
+                                         lastAssistantMessage?.content?.includes('Capitolul V s-a încheiat') ||
+                                         lastAssistantMessage?.content?.includes('Concluzii și plan de acțiune');
+
+            if (isFullReportComplete && !isReportComplete) {
+                // Show subscription modal after full report is complete
                 setTimeout(() => {
                     setShowSubscription(true);
                     setIsReportComplete(true);
-                }, 6000);
+                }, 3000);
             }
 
         } catch (error: any) {
