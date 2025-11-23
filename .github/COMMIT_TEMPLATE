@@ -1,0 +1,18 @@
+# Session with [Claude/Antigravity]: [Short description]
+#
+# Modificări:
+# - [file1]: [change description]
+# - [file2]: [change description]
+#
+# Fixes: [issue description]
+# Build: [✅ Success / ❌ Failed]
+#
+# --- Instructions ---
+# Line 1: Type + Agent + Short description (max 72 chars)
+# Line 3+: Detailed changes (what and why)
+# 
+# Examples:
+# Session with Claude: Fix test completion logic
+# Session with Antigravity: Implement RAG with OpenAI
+# fix: Resolve validation conflict at test end
+# feat: Add dynamic Anthropic import
