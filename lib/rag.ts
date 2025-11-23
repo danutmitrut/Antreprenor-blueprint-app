@@ -1,10 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
 export interface SearchResult {
     content: string;
     metadata: Record<string, any>;
@@ -22,6 +18,11 @@ export async function searchDocuments(
     } = {}
 ): Promise<SearchResult[]> {
     const { matchThreshold = 0.5, matchCount = 3 } = options;
+
+    // Initialize OpenAI client inside function to avoid build-time errors
+    const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
 
     // Initialize Supabase client
     const supabase = createClient(
