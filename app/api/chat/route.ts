@@ -1,5 +1,7 @@
 import { streamText } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
 import { createClient } from '@supabase/supabase-js';
+import { searchDocuments } from '@/lib/rag';
 
 export const maxDuration = 30; // Edge functions have different limits, but streaming helps.
 export const runtime = 'edge';
@@ -56,13 +58,35 @@ export async function POST(req: Request) {
             return new Response('Missing ANTHROPIC_API_KEY', { status: 401 });
         }
 
-        // Dynamic import to avoid build-time initialization
-        const { createAnthropic } = await import('@ai-sdk/anthropic');
+        // --- RAG: Semantic Search for Relevant Documentation ---
+        let ragContext = '';
+        try {
+            // Build search query from user context
+            const searchQuery = `
+                HEXACO personality analysis for entrepreneur
+                Factors: ${scores?.factors ? Object.keys(scores.factors).join(', ') : 'standard HEXACO'}
+                Industry: ${userInfo?.industry || 'business'}
+                Goals: ${userGoals ? Object.values(userGoals).join(' ') : ''}
+            `.trim();
 
-        // Create Anthropic provider with explicit API key
-        const anthropic = createAnthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY
-        });
+            const relevantDocs = await searchDocuments(searchQuery, {
+                matchCount: 3,
+                matchThreshold: 0.6,
+            });
+
+            if (relevantDocs.length > 0) {
+                ragContext = '\n\n=== REFERENCE MATERIAL (HEXACO Research) ===\n';
+                relevantDocs.forEach((doc, idx) => {
+                    ragContext += `\n[Source ${idx + 1}: ${doc.metadata.source}]\n${doc.content}\n`;
+                });
+                ragContext += '\n=== END REFERENCE MATERIAL ===\n';
+            }
+        } catch (ragError) {
+            console.error('RAG search failed:', ragError);
+            // Continue without RAG if it fails
+        }
+        // --- RAG END ---
+
 
         // Safe formatting for goals
         const formattedGoals = Array.isArray(userGoals)
@@ -110,11 +134,11 @@ SCORURI HEXACO:
 ${formatScores(scores)}
 `;
 
-        // Construct the system prompt with user context
+        // Construct the system prompt with user context and RAG
         const systemPrompt = `
 Ești un consultant de business expert și psiholog organizațional specializat în metodologia HEXACO.
 Rolul tău este să analizezi profilul psihologic al antreprenorului și să generezi un raport CONCIS, APLICABIL și DIRECT LA OBIECT.
-
+${ragContext ? ragContext : ''}
 ⚠️ **REGULI CRITICE DE LUNGIME - ABSOLUT OBLIGATORII:**
 - Raportul COMPLET: MAXIM 7500-8500 cuvinte (15 pagini A4) - OPREȘTE-TE AICI!
 - Fiecare capitol are LIMITE STRICTE - nu depăși niciodată!
