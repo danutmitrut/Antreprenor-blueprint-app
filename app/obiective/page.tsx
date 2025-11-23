@@ -59,13 +59,6 @@ export default function ObjectivesPage() {
             return;
         }
 
-        // Validare punctuație finală (cel puțin un punct, virgulă sau semn de exclamație)
-        const hasPunctuationRegex = /[.!?,;]/;
-        if (!hasPunctuationRegex.test(formData.mainGoal) || !hasPunctuationRegex.test(formData.mainObstacle) ||
-            !hasPunctuationRegex.test(formData.expectations)) {
-            setError('Te rugăm să scrii în propoziții complete cu punctuație corespunzătoare.');
-            return;
-        }
 
         // Salvează în localStorage
         localStorage.setItem('user_goals', JSON.stringify(formData));
