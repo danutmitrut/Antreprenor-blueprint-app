@@ -10,6 +10,18 @@ export async function POST(req: Request) {
 
         const { email, name } = await req.json();
 
+        // Get base URL from request headers or environment variable
+        const host = req.headers.get('host');
+        const protocol = req.headers.get('x-forwarded-proto') || 'https';
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
+                       (host ? `${protocol}://${host}` : 'http://localhost:3000');
+
+        console.log('=== STRIPE CHECKOUT DEBUG ===');
+        console.log('Base URL:', baseUrl);
+        console.log('Host:', host);
+        console.log('Protocol:', protocol);
+        console.log('NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL);
+
         // Create Checkout Session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -20,8 +32,8 @@ export async function POST(req: Request) {
                 },
             ],
             mode: 'subscription',
-            success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/auth/callback?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/chat`,
+            success_url: `${baseUrl}/auth/callback?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${baseUrl}/chat`,
             customer_email: email,
             metadata: {
                 full_name: name,
