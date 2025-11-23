@@ -1,5 +1,4 @@
 import { streamText } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
 import { createClient } from '@supabase/supabase-js';
 import { searchDocuments } from '@/lib/rag';
 
@@ -58,6 +57,14 @@ export async function POST(req: Request) {
             return new Response('Missing ANTHROPIC_API_KEY', { status: 401 });
         }
 
+        // Dynamic import to avoid build-time initialization
+        const { createAnthropic } = await import('@ai-sdk/anthropic');
+
+        // Create Anthropic provider with explicit API key
+        const anthropic = createAnthropic({
+            apiKey: process.env.ANTHROPIC_API_KEY
+        });
+
         // --- RAG: Semantic Search for Relevant Documentation ---
         let ragContext = '';
         try {
@@ -70,14 +77,16 @@ export async function POST(req: Request) {
             `.trim();
 
             const relevantDocs = await searchDocuments(searchQuery, {
-                matchCount: 3,
-                matchThreshold: 0.6,
+                matchCount: 2, // Reduced from 3 to save tokens
+                matchThreshold: 0.7, // Increased from 0.6 to be more selective
             });
 
             if (relevantDocs.length > 0) {
                 ragContext = '\n\n=== REFERENCE MATERIAL (HEXACO Research) ===\n';
                 relevantDocs.forEach((doc, idx) => {
-                    ragContext += `\n[Source ${idx + 1}: ${doc.metadata.source}]\n${doc.content}\n`;
+                    // Truncate each doc to max 300 words to prevent token overflow
+                    const truncatedContent = doc.content.split(' ').slice(0, 300).join(' ');
+                    ragContext += `\n[Source ${idx + 1}: ${doc.metadata.source}]\n${truncatedContent}...\n`;
                 });
                 ragContext += '\n=== END REFERENCE MATERIAL ===\n';
             }
@@ -349,6 +358,7 @@ Execuție disciplinată și atenție la detalii - asset major pentru scalare la 
                 console.log('=== STREAM FINISHED ===');
                 console.log('Finish reason:', result.finishReason);
                 console.log('Text length:', result.text?.length || 0);
+                console.log('Usage:', result.usage);
             },
         });
 
