@@ -13,6 +13,7 @@ export default function ObjectivesPage() {
     });
     const [userInfo, setUserInfo] = useState<any>(null);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         // Verifică dacă datele personale au fost completate
@@ -24,41 +25,40 @@ export default function ObjectivesPage() {
         setUserInfo(JSON.parse(savedUserInfo));
     }, [router]);
 
+    const validateField = (value: string): string | null => {
+        if (!value.trim()) return 'Acest câmp este obligatoriu.';
+        if (value.trim().length < 30) return `Încă ${30 - value.trim().length} caractere necesare (minim 30).`;
+        const invalidTextRegex = /^[\d\s\W]+$/;
+        if (invalidTextRegex.test(value)) return 'Scrie în text coerent, nu doar cifre sau semne.';
+        const wordCountRegex = /[a-zA-ZăâîșțĂÂÎȘȚ]{2,}/g;
+        const words = (value.match(wordCountRegex) || []).length;
+        if (words < 4) return 'Răspunsul are nevoie de cel puțin 4 cuvinte semnificative.';
+        return null;
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        // Validare
-        if (!formData.mainGoal || !formData.mainObstacle || !formData.expectations) {
-            setError('Te rugăm să răspunzi la toate cele 3 întrebări pentru a putea genera o analiză completă.');
-            return;
+        const errors: Record<string, string> = {};
+        const fields = [
+            { key: 'mainGoal', label: 'Întrebarea 1' },
+            { key: 'mainObstacle', label: 'Întrebarea 2' },
+            { key: 'expectations', label: 'Întrebarea 3' },
+        ];
+
+        for (const field of fields) {
+            const err = validateField(formData[field.key as keyof typeof formData]);
+            if (err) errors[field.key] = err;
         }
 
-        // Validare lungime minimă - 30 caractere
-        if (formData.mainGoal.length < 30 || formData.mainObstacle.length < 30 || formData.expectations.length < 30) {
-            setError('Te rugăm să oferi răspunsuri mai detaliate (minim 30 caractere) pentru fiecare întrebare.');
+        setFieldErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            const count = Object.keys(errors).length;
+            setError(`${count === 1 ? 'Un răspuns necesită' : `${count} răspunsuri necesită`} completare — verifică câmpurile marcate mai jos.`);
             return;
         }
-
-        // Validare doar cifre sau semne (nu permite răspunsuri gen "123...", "!!")
-        const invalidTextRegex = /^[\d\s\W]+$/;
-        if (invalidTextRegex.test(formData.mainGoal) || invalidTextRegex.test(formData.mainObstacle) ||
-            invalidTextRegex.test(formData.expectations)) {
-            setError('Te rugăm să oferi răspunsuri în text coerent (litere) - nu doar cifre sau semne de punctuație.');
-            return;
-        }
-
-        // Validare minim cuvinte cu litere (cel puțin 4 cuvinte de minim 2 litere)
-        const wordCountRegex = /[a-zA-ZăâîșțĂÂÎȘȚ]{2,}/g;
-        const mainGoalWords = (formData.mainGoal.match(wordCountRegex) || []).length;
-        const mainObstacleWords = (formData.mainObstacle.match(wordCountRegex) || []).length;
-        const expectationsWords = (formData.expectations.match(wordCountRegex) || []).length;
-
-        if (mainGoalWords < 4 || mainObstacleWords < 4 || expectationsWords < 4) {
-            setError('Te rugăm să oferi răspunsuri mai complete (minim 4 cuvinte semnificative) pentru fiecare întrebare.');
-            return;
-        }
-
 
         // Salvează în localStorage
         localStorage.setItem('user_goals', JSON.stringify(formData));
@@ -117,15 +117,24 @@ export default function ObjectivesPage() {
                             </label>
                             <textarea
                                 value={formData.mainGoal}
-                                onChange={(e) => setFormData({ ...formData, mainGoal: e.target.value })}
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none text-slate-900 placeholder:text-slate-400"
+                                onChange={(e) => { setFormData({ ...formData, mainGoal: e.target.value }); setFieldErrors(prev => ({ ...prev, mainGoal: undefined as any })); }}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all resize-none text-slate-900 placeholder:text-slate-400 ${fieldErrors.mainGoal ? 'border-red-300 focus:ring-red-400' : 'border-slate-200 focus:ring-primary'}`}
                                 rows={4}
                                 placeholder="Ex: Creșterea veniturilor, scalarea afacerii, echilibru viață personală-business..."
                                 required
                             />
-                            <p className="text-sm text-slate-500 mt-2">
-                                Fii cât mai specific posibil. De exemplu: "Vreau să cresc veniturile afacerii de la 50K la 200K în următorul an."
-                            </p>
+                            <div className="flex justify-between items-start mt-2">
+                                <div className="flex-1">
+                                    {fieldErrors.mainGoal ? (
+                                        <p className="text-sm text-red-600 font-medium">{fieldErrors.mainGoal}</p>
+                                    ) : (
+                                        <p className="text-sm text-slate-500">Fii cât mai specific posibil. De exemplu: "Vreau să cresc veniturile afacerii de la 50K la 200K în următorul an."</p>
+                                    )}
+                                </div>
+                                <span className={`text-xs ml-3 tabular-nums ${formData.mainGoal.trim().length >= 30 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                    {formData.mainGoal.trim().length}/30
+                                </span>
+                            </div>
                         </div>
 
                         {/* Întrebarea 2 */}
@@ -136,15 +145,24 @@ export default function ObjectivesPage() {
                             </label>
                             <textarea
                                 value={formData.mainObstacle}
-                                onChange={(e) => setFormData({ ...formData, mainObstacle: e.target.value })}
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none text-slate-900 placeholder:text-slate-400"
+                                onChange={(e) => { setFormData({ ...formData, mainObstacle: e.target.value }); setFieldErrors(prev => ({ ...prev, mainObstacle: undefined as any })); }}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all resize-none text-slate-900 placeholder:text-slate-400 ${fieldErrors.mainObstacle ? 'border-red-300 focus:ring-red-400' : 'border-slate-200 focus:ring-primary'}`}
                                 rows={4}
                                 placeholder="Ex: Lipsa de claritate, procrastinarea, frica de eșec, lipsa de timp..."
                                 required
                             />
-                            <p className="text-sm text-slate-500 mt-2">
-                                Poate fi un obstacol extern (resurse, piață) sau intern (mentalitate, obiceiuri).
-                            </p>
+                            <div className="flex justify-between items-start mt-2">
+                                <div className="flex-1">
+                                    {fieldErrors.mainObstacle ? (
+                                        <p className="text-sm text-red-600 font-medium">{fieldErrors.mainObstacle}</p>
+                                    ) : (
+                                        <p className="text-sm text-slate-500">Poate fi un obstacol extern (resurse, piață) sau intern (mentalitate, obiceiuri).</p>
+                                    )}
+                                </div>
+                                <span className={`text-xs ml-3 tabular-nums ${formData.mainObstacle.trim().length >= 30 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                    {formData.mainObstacle.trim().length}/30
+                                </span>
+                            </div>
                         </div>
 
                         {/* Întrebarea 3 */}
@@ -155,15 +173,24 @@ export default function ObjectivesPage() {
                             </label>
                             <textarea
                                 value={formData.expectations}
-                                onChange={(e) => setFormData({ ...formData, expectations: e.target.value })}
-                                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none text-slate-900 placeholder:text-slate-400"
+                                onChange={(e) => { setFormData({ ...formData, expectations: e.target.value }); setFieldErrors(prev => ({ ...prev, expectations: undefined as any })); }}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all resize-none text-slate-900 placeholder:text-slate-400 ${fieldErrors.expectations ? 'border-red-300 focus:ring-red-400' : 'border-slate-200 focus:ring-primary'}`}
                                 rows={4}
                                 placeholder="Ex: O mai bună înțelegere a punctelor tale forte, strategii de optimizare, claritate în luarea deciziilor..."
                                 required
                             />
-                            <p className="text-sm text-slate-500 mt-2">
-                                Ce tip de insight sau strategie te-ar ajuta cel mai mult acum?
-                            </p>
+                            <div className="flex justify-between items-start mt-2">
+                                <div className="flex-1">
+                                    {fieldErrors.expectations ? (
+                                        <p className="text-sm text-red-600 font-medium">{fieldErrors.expectations}</p>
+                                    ) : (
+                                        <p className="text-sm text-slate-500">Ce tip de insight sau strategie te-ar ajuta cel mai mult acum?</p>
+                                    )}
+                                </div>
+                                <span className={`text-xs ml-3 tabular-nums ${formData.expectations.trim().length >= 30 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                    {formData.expectations.trim().length}/30
+                                </span>
+                            </div>
                         </div>
 
                         {/* Info Box */}
