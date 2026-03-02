@@ -388,7 +388,7 @@ Execuție disciplinată și atenție la detalii - asset major pentru scalare la 
             system: systemPrompt,
             messages,
             temperature: 0.7,
-            maxTokens: 4096,
+            maxOutputTokens: 4096,
             maxRetries: 2,
             onFinish: (result) => {
                 console.log('=== STREAM FINISHED ===');
