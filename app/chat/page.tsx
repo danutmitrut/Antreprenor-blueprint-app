@@ -535,12 +535,6 @@ export default function ChatPage() {
                 </div>
             </div>
 
-            {/* Debug Info (Visible only if there's info) */}
-            {debugInfo && (
-                <div className="bg-yellow-50 border-b border-yellow-200 p-2 text-xs text-yellow-800 font-mono text-center">
-                    Debug: {debugInfo}
-                </div>
-            )}
 
             {/* Chat Area */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full">
