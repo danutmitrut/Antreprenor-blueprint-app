@@ -5,10 +5,10 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       {/* Header / Logo Area */}
-      <header className="absolute top-0 left-0 w-full z-50 p-6">
+      <header className="absolute top-0 left-0 w-full z-50 p-4">
         <div className="container mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 relative">
+          <div className="flex items-center gap-2">
+            <div className="w-12 h-12 relative">
               <img src="/logo.png" alt="AI Architect Logo" className="w-full h-full object-contain drop-shadow-lg" />
             </div>
             <span className="text-white font-bold text-xl tracking-wide opacity-90">AI ARCHITECT</span>
@@ -17,29 +17,27 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-slate-900 text-white pt-32 pb-20 lg:pt-40 lg:pb-24">
+      <section className="relative overflow-hidden bg-slate-900 text-white pt-24 pb-16 lg:pt-28 lg:pb-20">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-[#0C4A6E]/40 to-slate-50"></div>
         <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10"></div>
 
         <div className="container mx-auto px-6 relative z-10 text-center max-w-4xl">
-          <div className="inline-flex items-center bg-primary/10 border border-primary/20 rounded-full px-6 py-2 backdrop-blur-md mb-8">
+          <div className="inline-flex items-center bg-primary/10 border border-primary/20 rounded-full px-6 py-2 backdrop-blur-md mb-5">
             <span className="text-primary-light font-bold text-sm md:text-base tracking-widest uppercase">Antreprenor Blueprint System</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight leading-tight">
-            Descifrează <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">ADN-ul tău</span> <br />
-            antreprenorial
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight">
+            Descifrează <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">ADN-ul tău</span> antreprenorial
           </h1>
 
-          <h2 className="text-xl md:text-2xl text-slate-200 mb-10 font-light leading-relaxed">
-            Nu poți scala ceea ce nu înțelegi<br />
-            Descoperă arhitectura invizibilă a deciziilor tale de business
+          <h2 className="text-lg md:text-xl text-slate-200 mb-8 font-light leading-relaxed">
+            Nu poți scala ceea ce nu înțelegi — descoperă arhitectura invizibilă a deciziilor tale de business
           </h2>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/start"
-              className="w-full sm:w-auto bg-accent hover:bg-accent-dark text-white text-lg font-bold py-4 px-10 rounded-full shadow-xl hover:shadow-orange-500/20 transition-all transform hover:-translate-y-1 flex items-center justify-center"
+              className="w-full sm:w-auto bg-accent hover:bg-accent-dark text-white text-lg font-bold py-3.5 px-8 rounded-full shadow-xl hover:shadow-orange-500/20 transition-all transform hover:-translate-y-1 flex items-center justify-center"
             >
               Începe Testul Gratuit
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -55,7 +53,7 @@ export default function LandingPage() {
             )}
             <Link
               href="#how-it-works"
-              className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white border border-white/10 text-lg font-medium py-4 px-8 rounded-full transition-all backdrop-blur-sm flex items-center justify-center"
+              className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white border border-white/10 text-lg font-medium py-3.5 px-8 rounded-full transition-all backdrop-blur-sm flex items-center justify-center"
             >
               Cum funcționează?
             </Link>
@@ -64,11 +62,11 @@ export default function LandingPage() {
       </section>
 
       {/* Ce este Antreprenor Blueprint */}
-      <section className="relative z-20 -mt-12 pb-16">
+      <section className="relative z-20 -mt-10 pb-12">
         <div className="container mx-auto px-6">
-          <div className="bg-white p-10 md:p-12 rounded-2xl shadow-2xl border border-slate-100 max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6 text-center">Ce este Antreprenor Blueprint</h2>
-            <div className="space-y-4 text-slate-600 leading-relaxed text-lg">
+          <div className="bg-white p-8 md:p-10 rounded-2xl shadow-2xl border border-slate-100 max-w-5xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4 text-center">Ce este Antreprenor Blueprint</h2>
+            <div className="space-y-3 text-slate-600 leading-relaxed text-base">
               <p>
                 Antreprenor Blueprint este un asistent AI care îți citește profilul de personalitate (modelul HEXACO) și îl traduce în limbaj de business: stil de leadership, felul în care iei decizii, cum gestionezi riscul, relațiile cu clienții, echipa și partenerii.
               </p>

@@ -217,9 +217,13 @@ export default function ChatPage() {
         }
     };
 
-    // Simple auto-scroll - smooth scroll to bottom on new messages
+    // Stable auto-scroll that doesn't cause input bar jumping
+    const chatContainerRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const container = chatContainerRef.current;
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
     }, [messages]);
 
     const handleExport = async () => {
@@ -500,7 +504,7 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col">
+        <div className="h-screen bg-slate-50 flex flex-col overflow-hidden">
             {/* Header */}
             <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
                 <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -545,7 +549,7 @@ export default function ChatPage() {
             )}
 
             {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full">
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto overscroll-none p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full">
                 {messages.map((m) => (
                     <div
                         key={m.id}
@@ -603,7 +607,7 @@ export default function ChatPage() {
             </div>
 
             {/* Input Area */}
-            <div className="bg-white border-t border-slate-200 p-4 md:p-6">
+            <div className="bg-white border-t border-slate-200 p-4 md:p-6 shrink-0">
                 <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative">
                     <input
                         value={inputValue}
