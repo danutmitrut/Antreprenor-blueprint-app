@@ -182,13 +182,12 @@ export default function ChatPage() {
                 ));
             }
 
-            // Trigger subscription offer after FULL report generation (all 5 chapters)
-            // Check if the report is complete by detecting Chapter V completion
+            // Trigger subscription offer ONLY after the explicit closing message
+            // Do NOT trigger on chapter headings which appear mid-generation
             const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant');
-            const isFullReportComplete = lastAssistantMessage?.content?.includes('Capitolul al V-lea') ||
-                                         lastAssistantMessage?.content?.includes('CAPITOLUL AL V-LEA') ||
-                                         lastAssistantMessage?.content?.includes('Capitolul V s-a încheiat') ||
-                                         lastAssistantMessage?.content?.includes('Concluzii și plan de acțiune');
+            const isFullReportComplete = lastAssistantMessage?.content?.includes('Analiza s-a încheiat') ||
+                                         lastAssistantMessage?.content?.includes('salvezi această analiză') ||
+                                         lastAssistantMessage?.content?.includes('Capitolul V s-a încheiat');
 
             if (isFullReportComplete && !isReportComplete) {
                 // Show subscription modal after full report is complete

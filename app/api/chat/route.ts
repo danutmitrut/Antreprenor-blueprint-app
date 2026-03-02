@@ -2,7 +2,7 @@ import { streamText } from 'ai';
 import { createClient } from '@supabase/supabase-js';
 import { searchDocuments } from '@/lib/rag';
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
     try {
@@ -388,6 +388,7 @@ Execuție disciplinată și atenție la detalii - asset major pentru scalare la 
             system: systemPrompt,
             messages,
             temperature: 0.7,
+            maxTokens: 4096,
             maxRetries: 2,
             onFinish: (result) => {
                 console.log('=== STREAM FINISHED ===');
