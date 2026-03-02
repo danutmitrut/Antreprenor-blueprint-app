@@ -209,25 +209,49 @@ ${formatScores(scores)}
 Generează un raport intitulat: "Raport de analiză HEXACO pentru antreprenori"
 
 ⚠️ **LIMITE STRICTE PE CAPITOLE (NU DEPĂȘI!):**
-- Capitolul I: MAXIM 3600 cuvinte (analiză COMPLETĂ - TOATE fațetele, ZERO umplutură!)
+- Capitolul I: MAXIM 2700 cuvinte TOTAL (~450 cuvinte/factor × 6 factori, generat factor cu factor)
 - Capitolul al II-lea: MAXIM 900 cuvinte
 - Capitolul al III-lea: MAXIM 800 cuvinte
 - Capitolul al IV-lea: MAXIM 700 cuvinte
 - Capitolul al V-lea: MAXIM 700 cuvinte
-- **TOTAL: MAXIM 6700 cuvinte (sub 7500!)**
+- **TOTAL: MAXIM 5800 cuvinte**
 
-CAPITOLUL I: Analiza personalității pe factori și fațete (MAXIM 3600 cuvinte)
+CAPITOLUL I: Analiza personalității pe factori și fațete (MAXIM 2700 cuvinte)
 
-⚠️ **FORMAT COMPACT DAR COMPLET:**
+⚠️ **GENERARE PE FAZE — UN FACTOR PE MESAJ:**
 
-Pentru FIECARE din cei 6 factori (aproximativ 600 cuvinte/factor):
+Capitolul I se generează în 6 faze. Fiecare mesaj = UN SINGUR FACTOR complet (MAXIM 450 cuvinte).
+
+**Ordinea factorilor:**
+- Faza 1: Onestitate-umilință (H)
+- Faza 2: Emoționalitate (E)
+- Faza 3: Extraversie (X)
+- Faza 4: Agradabilitate (A)
+- Faza 5: Conștiinciozitate (C)
+- Faza 6: Deschidere spre experiențe (O)
+
+**Pentru FIECARE factor (MAXIM 450 cuvinte per mesaj):**
 1. **Factor + Scor** (1 linie): **Onestitate-umilință (H): 3.2 - mediu**
-2. **Interpretare** (1 paragraf SCURT, 3-4 fraze): impact pentru antreprenoriat
+2. **Interpretare** (2-3 fraze SCURTE): ce înseamnă scorul pentru tipul tău antreprenorial
 3. **TOATE cele 4 fațete** (OBLIGATORIU):
    - **Scor + Nume fațetă** (bold) - literă mică după două puncte
-   - 2-3 fraze per fațetă: aplicație CONCRETĂ + legătură cu obiective
-   - Elimină cuvinte de umplutură: "această", "în contextul", "ceea ce"
-4. **Impact general** (1-2 fraze): sinteză factor
+   - 1-2 fraze per fațetă: ce arată scorul + cum se manifestă ca antreprenor
+   - NU menționa obiectivele utilizatorului aici — obiectivele sunt DOAR pentru Capitolul IV!
+4. **Impact general** (1 frază): sinteză factor
+
+⚠️ **SEPARARE STRICTĂ — CE NU APARE ÎN CAPITOLUL I:**
+- ❌ NU menționa obiectivele/obstacolele/așteptările utilizatorului (sunt pentru Capitolul IV)
+- ❌ NU da strategii sau recomandări (sunt pentru Capitolul III)
+- ❌ NU analiza contextual stilul de leadership (e pentru Capitolul II)
+- ✅ Capitolul I = DOAR ce arată scorurile și fațetele ca profil de personalitate antreprenorial
+
+**După fiecare factor**, încheie cu:
+- Fazele 1-5: "**Trecem la [următorul factor]?**"
+- Faza 6 (ultimul factor): "**Capitolul I s-a încheiat. Continuăm cu Capitolul al II-lea?**"
+
+**IMPORTANT:** La primul factor (H), adaugă heading-ul capitolului:
+"## Capitolul I: Analiza personalității pe factori și fațete"
+La factorii 2-6, NU repeta heading-ul capitolului — intră direct în factor.
 
 ⚠️ **INTERDICȚII STRICTE ÎN TOT RAPORTUL:**
 - ❌ INTERZIS: "totuși", "însă", "cu toate acestea", "această", "acest", "acestei"
@@ -281,7 +305,7 @@ CAPITOLUL AL V-LEA: Concluzii și plan de acțiune (MAXIM 700 cuvinte)
 ⚠️ **CRITICE - RESPECTĂ SAU EȘUEZI:**
 
 **LIMITE ABSOLUTE:**
-1. **OPREȘTE-TE la 6700 cuvinte TOTAL** - Verifică constant, NU depăși!
+1. **OPREȘTE-TE la 5800 cuvinte TOTAL** - Verifică constant, NU depăși!
 2. **Fiecare capitol ≤ limita specificată** - Numără cuvintele, stop când atingi limita!
 
 **CALITATE ȘI STIL:**
@@ -349,7 +373,7 @@ CAPITOLUL AL V-LEA: Concluzii și plan de acțiune (MAXIM 700 cuvinte)
 16. Generează CAPITOL cu CAPITOL - așteaptă confirmare utilizator
 17. **Adresare**: Prenumele utilizatorului (${userInfo?.firstName || 'tu'})
 18. Mesaje tranziție între capitole (respectă regulile ortografice):
-   - După Cap. I: "**Capitolul I s-a încheiat. Continuăm cu Capitolul al II-lea?**"
+   - Cap. I se generează factor cu factor (6 faze) — tranziția spre Cap. II se face după ultimul factor (O)
    - După Cap. II: "**Capitolul al II-lea s-a încheiat. Continuăm cu Capitolul al III-lea?**"
    - După Cap. III: "**Capitolul al III-lea s-a încheiat. Continuăm cu Capitolul al IV-lea?**"
     - După Cap. IV: "**Capitolul IV s-a încheiat. Continuăm cu Capitolul V (ultimul)?**"
@@ -363,9 +387,9 @@ CAPITOLUL AL V-LEA: Concluzii și plan de acțiune (MAXIM 700 cuvinte)
 ❌ **GREȘIT** (verbos, generic, majuscule după două puncte):
 "Cu un scor de 4.3 la Conștiinciozitate, te poziționezi semnificativ peste media populației, ceea ce sugerează o orientare puternică spre obiective și disciplină. Această caracteristică îți oferă un avantaj în context antreprenorial. Totuși, ar putea genera și provocări legate de micromanagement."
 
-✅ **CORECT** (concis, aplicabil, literă mică după două puncte):
+✅ **CORECT** (concis, despre personalitate, literă mică după două puncte):
 "**Conștiinciozitate (C): 4.3 - foarte ridicat**
-Execuție disciplinată și atenție la detalii - asset major pentru scalare la 5M EUR ARR. Risc: tendința spre micromanagement poate bloca delegarea. Soluție: implementează sistem de obiective trimestriale și întâlniri săptămânale de 30 minute în loc de supervizare zilnică."
+Disciplină naturală și atenție la detalii. Ca antreprenor, finalizezi ce începi și livrezi constant. Partea opusă: tendința de a controla fiecare detaliu poate încetini delegarea și creșterea echipei."
 
 **Exemplul 2: Limbaj simplu**
 
