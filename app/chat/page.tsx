@@ -536,6 +536,15 @@ export default function ChatPage() {
             </div>
 
 
+            {/* Info Banner */}
+            {messages.length <= 2 && (
+                <div className="bg-blue-50 border-b border-blue-100 px-4 py-3 text-center">
+                    <p className="text-sm text-blue-700">
+                        Raportul se generează capitol cu capitol. Dacă generarea se întrerupe, întreabă agentul: <strong>„Ai terminat capitolul?"</strong> sau <strong>„Continuă."</strong>
+                    </p>
+                </div>
+            )}
+
             {/* Chat Area */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 max-w-4xl mx-auto w-full">
                 {messages.map((m) => (
