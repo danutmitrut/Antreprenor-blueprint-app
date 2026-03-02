@@ -2,8 +2,7 @@ import { streamText } from 'ai';
 import { createClient } from '@supabase/supabase-js';
 import { searchDocuments } from '@/lib/rag';
 
-export const maxDuration = 30; // Edge functions have different limits, but streaming helps.
-export const runtime = 'edge';
+export const maxDuration = 30;
 
 export async function POST(req: Request) {
     try {
