@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createUser, generateToken } from '@/lib/auth';
+import {
+    createUser,
+    generateToken,
+    getAuthCookieName,
+    getAuthCookieOptions,
+} from '@/lib/auth';
 
 export async function POST(req: Request) {
     try {
         const { email, password, first_name, last_name } = await req.json();
 
-        // Validation
         if (!email || !password || !first_name || !last_name) {
             return NextResponse.json(
                 { error: 'Toate câmpurile sunt obligatorii' },
@@ -13,7 +17,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return NextResponse.json(
@@ -22,7 +25,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Password validation (minimum 8 characters)
         if (password.length < 8) {
             return NextResponse.json(
                 { error: 'Parola trebuie să aibă cel puțin 8 caractere' },
@@ -30,7 +32,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Create user
         const { user, error } = await createUser({
             email,
             password,
@@ -45,16 +46,16 @@ export async function POST(req: Request) {
             );
         }
 
-        // Generate JWT token
-        const token = generateToken({
-            userId: user.id,
-            email: user.email,
-        });
+        const token = generateToken(
+            {
+                userId: user.id,
+                email: user.email,
+            },
+            user.password_hash
+        );
 
-        // Return user data and token
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
-            token,
             user: {
                 id: user.id,
                 email: user.email,
@@ -63,6 +64,9 @@ export async function POST(req: Request) {
                 email_verified: user.email_verified,
             },
         });
+
+        response.cookies.set(getAuthCookieName(), token, getAuthCookieOptions());
+        return response;
     } catch (error: any) {
         console.error('Register error:', error);
         return NextResponse.json(

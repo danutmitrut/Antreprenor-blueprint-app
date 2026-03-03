@@ -24,20 +24,17 @@ export async function POST(req: Request) {
         console.log('Is new report:', isNewReport);
 
         if (isNewReport) {
-            // Check for JWT token (authenticated user)
-            const authHeader = req.headers.get('Authorization');
+            // Check for authenticated user via HttpOnly cookie or Authorization header
             let userId = null;
             let hasActiveSubscription = false;
 
-            if (authHeader && authHeader.startsWith('Bearer ')) {
-                const token = authHeader.substring(7);
+            const { authenticateRequest, hasActiveSubscription: checkSubscription, getAuthTokenFromRequest } = await import('@/lib/auth');
+            const incomingToken = getAuthTokenFromRequest(req);
 
-                // Dynamically import auth utilities to avoid edge runtime issues
-                const { verifyToken, hasActiveSubscription: checkSubscription } = await import('@/lib/auth');
-
-                const payload = verifyToken(token);
-                if (payload) {
-                    userId = payload.userId;
+            if (incomingToken) {
+                const auth = await authenticateRequest(req);
+                if (auth) {
+                    userId = auth.user.id;
                     hasActiveSubscription = await checkSubscription(userId);
                     console.log('✅ Authenticated user:', userId);
                     console.log('Has active subscription:', hasActiveSubscription);

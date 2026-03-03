@@ -55,18 +55,8 @@ export default function DashboardPage() {
 
     const fetchDashboardData = async () => {
         try {
-            const token = localStorage.getItem('auth_token');
-
-            if (!token) {
-                router.push('/auth/login');
-                return;
-            }
-
-            // Fetch user info
             const userResponse = await fetch('/api/auth/me', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             if (!userResponse.ok) {
@@ -76,11 +66,8 @@ export default function DashboardPage() {
             const userData = await userResponse.json();
             setUser(userData.user);
 
-            // Fetch subscription info
             const subResponse = await fetch('/api/subscription', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             if (subResponse.ok) {
@@ -88,11 +75,8 @@ export default function DashboardPage() {
                 setSubscription(subData.subscription);
             }
 
-            // Fetch reports
             const reportsResponse = await fetch('/api/reports', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             if (reportsResponse.ok) {
@@ -103,7 +87,10 @@ export default function DashboardPage() {
         } catch (err: any) {
             setError(err.message);
             if (err.message === 'Sesiune expirată') {
-                localStorage.removeItem('auth_token');
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include',
+                });
                 router.push('/auth/login');
             }
         } finally {
@@ -111,19 +98,19 @@ export default function DashboardPage() {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('auth_token');
+    const handleLogout = async () => {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+        });
         router.push('/auth/login');
     };
 
     const handleManageBilling = async () => {
         try {
-            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/stripe/create-portal-session', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             const data = await response.json();
@@ -164,7 +151,6 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-            {/* Header */}
             <div className="bg-white border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
@@ -190,10 +176,8 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Subscription Status Card */}
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-xl shadow-lg p-6">
                             <div className="flex items-center gap-2 mb-4">
@@ -219,19 +203,18 @@ export default function DashboardPage() {
                                                 })}
                                             </div>
                                             {subscription.cancel_at_period_end && (
-                                                <div className="bg-amber-50 border border-amber-200 text-amber-700 p-3 rounded-lg text-sm">
-                                                    <AlertCircle className="w-4 h-4 inline mr-1" />
-                                                    Abonamentul va fi anulat la expirare
+                                                <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">
+                                                    Abonamentul tău va fi anulat la sfârșitul perioadei curente.
                                                 </div>
                                             )}
                                         </>
                                     )}
                                     <button
                                         onClick={handleManageBilling}
-                                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all flex items-center justify-center gap-2 text-sm"
+                                        className="w-full mt-4 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2.5 px-4 rounded-lg transition-colors"
                                     >
                                         <ExternalLink className="w-4 h-4" />
-                                        Gestionează Abonamentul
+                                        Gestionează Facturarea
                                     </button>
                                 </div>
                             ) : (
@@ -241,62 +224,45 @@ export default function DashboardPage() {
                                         <span className="text-sm font-semibold text-red-700">Inactiv</span>
                                     </div>
                                     <p className="text-sm text-slate-600">
-                                        Abonamentul tău a expirat sau a fost anulat.
+                                        Nu ai un abonament activ momentan.
                                     </p>
                                     <Link
-                                        href="/start"
-                                        className="block w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all text-center text-sm"
+                                        href="/pricing"
+                                        className="w-full mt-4 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all"
                                     >
-                                        Reînnoiește Abonamentul
+                                        <PlusCircle className="w-4 h-4" />
+                                        Upgrade Acum
                                     </Link>
                                 </div>
                             )}
                         </div>
-
-                        {/* Quick Actions */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-                            <h2 className="text-lg font-bold text-slate-900 mb-4">Acțiuni Rapide</h2>
-                            <div className="space-y-3">
-                                <Link
-                                    href="/test"
-                                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-lg transition-colors group"
-                                >
-                                    <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                                        <PlusCircle className="w-5 h-5 text-white" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-slate-900 text-sm">Raport Nou</p>
-                                        <p className="text-xs text-slate-500">Începe test HEXACO</p>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
                     </div>
 
-                    {/* Reports List */}
                     <div className="lg:col-span-2">
                         <div className="bg-white rounded-xl shadow-lg p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-2">
                                     <FileText className="w-5 h-5 text-blue-600" />
-                                    <h2 className="text-lg font-bold text-slate-900">Rapoartele Tale</h2>
+                                    <h2 className="text-lg font-bold text-slate-900">Rapoartele Mele</h2>
                                 </div>
-                                <span className="text-sm text-slate-500">
-                                    {reports.length} {reports.length === 1 ? 'raport' : 'rapoarte'}
-                                </span>
+                                <Link
+                                    href="/chat"
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                                >
+                                    Raport nou
+                                </Link>
                             </div>
 
                             {reports.length === 0 ? (
                                 <div className="text-center py-12">
-                                    <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                                    <p className="text-slate-600 mb-4">
-                                        Nu ai generat încă niciun raport HEXACO.
-                                    </p>
+                                    <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                                    <p className="text-slate-500 mb-4">Nu ai încă rapoarte generate.</p>
                                     <Link
-                                        href="/test"
-                                        className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all"
+                                        href="/chat"
+                                        className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow-md transition-all"
                                     >
-                                        Începe Primul Test
+                                        <PlusCircle className="w-4 h-4" />
+                                        Generează Primul Raport
                                     </Link>
                                 </div>
                             ) : (
@@ -304,34 +270,32 @@ export default function DashboardPage() {
                                     {reports.map((report) => (
                                         <div
                                             key={report.id}
-                                            className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
+                                            className="border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
                                         >
-                                            <div className="flex items-start justify-between">
+                                            <div className="flex items-start justify-between gap-4">
                                                 <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <Calendar className="w-4 h-4 text-slate-400" />
-                                                        <span className="text-sm text-slate-600">
-                                                            {new Date(report.created_at).toLocaleDateString('ro-RO', {
-                                                                year: 'numeric',
-                                                                month: 'long',
-                                                                day: 'numeric',
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                            })}
-                                                        </span>
+                                                    <h3 className="font-semibold text-slate-900 mb-1">
+                                                        Raport HEXACO #{report.id.slice(0, 8)}
+                                                    </h3>
+                                                    <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+                                                        <Calendar className="w-4 h-4" />
+                                                        {new Date(report.created_at).toLocaleDateString('ro-RO', {
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                        })}
                                                     </div>
-                                                    <p className="text-sm text-slate-700">
-                                                        <span className="font-medium">Industrie:</span>{' '}
-                                                        {report.user_info?.industry || 'N/A'}
-                                                    </p>
-                                                    <p className="text-sm text-slate-700">
-                                                        <span className="font-medium">Vârstă:</span>{' '}
-                                                        {report.user_info?.age || 'N/A'}
-                                                    </p>
+                                                    {report.user_info && (
+                                                        <p className="text-sm text-slate-600">
+                                                            {report.user_info.role} • {report.user_info.industry}
+                                                        </p>
+                                                    )}
                                                 </div>
                                                 <Link
-                                                    href={`/dashboard/reports/${report.id}`}
-                                                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all text-sm"
+                                                    href={`/report/${report.id}`}
+                                                    className="text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap"
                                                 >
                                                     Vezi Raport
                                                 </Link>

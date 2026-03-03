@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getUserByResetToken, updateUserPassword } from '@/lib/auth';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
     try {
         const { token, password } = await req.json();
 
-        // Validation
         if (!token || !password) {
             return NextResponse.json(
                 { error: 'Token și parola sunt obligatorii' },
@@ -13,7 +13,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Password validation (minimum 8 characters)
         if (password.length < 8) {
             return NextResponse.json(
                 { error: 'Parola trebuie să aibă cel puțin 8 caractere' },
@@ -21,7 +20,15 @@ export async function POST(req: Request) {
             );
         }
 
-        // Get user by reset token
+        const limited = await enforceRateLimit(
+            req,
+            '/api/auth/reset-password',
+            10,
+            60 * 60 * 1000,
+            'Prea multe încercări de resetare parolă. Încearcă din nou într-o oră.'
+        );
+        if (limited) return limited;
+
         const user = await getUserByResetToken(token);
         if (!user) {
             return NextResponse.json(
@@ -30,7 +37,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Check if token is expired
         if (user.password_reset_expires) {
             const expiresAt = new Date(user.password_reset_expires);
             const now = new Date();
@@ -43,7 +49,6 @@ export async function POST(req: Request) {
             }
         }
 
-        // Update password
         const { success, error } = await updateUserPassword(user.id, password);
 
         if (!success || error) {

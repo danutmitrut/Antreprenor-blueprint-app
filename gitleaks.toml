@@ -1,0 +1,58 @@
+title = "Security Baseline (Low Noise)"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Reduce false positives from docs, demos, and placeholders"
+paths = [
+  '''(?i)^docs/''',
+  '''(?i)^checkpoints/''',
+  '''(?i)^test-data/''',
+  '''(?i)^backups/''',
+  '''(?i)^\.codex/''',
+  '''(?i)^CHANGELOG\.md$''',
+  '''(?i)^LEARNING_HISTORY\.md$''',
+  '''(?i)^DEVELOPMENT_HISTORY\.md$'''
+]
+regexTarget = "line"
+regexes = [
+  '''(?i)(example|sample|placeholder|changeme|dummy|fake|mock|test[_-]?key)''',
+  '''(?i)SUPABASE_(ANON|SERVICE_ROLE)_KEY\s*=\s*["']?(your|example|placeholder|dummy|test)'''
+]
+
+[[rules]]
+id = "supabase-service-role-key"
+description = "Supabase service role key assignment"
+regex = '''(?i)SUPABASE_SERVICE_ROLE_KEY\s*[:=]\s*["']?[A-Za-z0-9_\-\.=]{24,}["']?'''
+secretGroup = 0
+entropy = 3
+keywords = ["SUPABASE_SERVICE_ROLE_KEY", "service_role"]
+
+[[rules.allowlists]]
+description = "Allow placeholders in env examples"
+paths = [
+  '''(?i)\.env\.example$''',
+  '''(?i)\.env\.template$'''
+]
+regexes = [
+  '''(?i)(example|placeholder|your[_-]?key|changeme|dummy|test)'''
+]
+
+[[rules]]
+id = "next-public-sensitive-name"
+description = "Potential sensitive value exposed through NEXT_PUBLIC_* naming"
+regex = '''(?i)NEXT_PUBLIC_[A-Z0-9_]*(SECRET|TOKEN|PASSWORD|PRIVATE|SERVICE_ROLE)[A-Z0-9_]*\s*[:=]\s*["']?[A-Za-z0-9_\-\.=]{8,}["']?'''
+secretGroup = 0
+entropy = 2
+keywords = ["NEXT_PUBLIC_"]
+
+[[rules.allowlists]]
+description = "Allow placeholders for docs/examples"
+paths = [
+  '''(?i)\.env\.example$''',
+  '''(?i)^docs/'''
+]
+regexes = [
+  '''(?i)(example|placeholder|dummy|test|mock|changeme)'''
+]

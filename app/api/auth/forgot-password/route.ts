@@ -5,12 +5,12 @@ import {
     setPasswordResetToken,
 } from '@/lib/auth';
 import { sendPasswordResetEmail } from '@/lib/email';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
     try {
         const { email } = await req.json();
 
-        // Validation
         if (!email) {
             return NextResponse.json(
                 { error: 'Email este obligatoriu' },
@@ -18,11 +18,17 @@ export async function POST(req: Request) {
             );
         }
 
-        // Get user
+        const limited = await enforceRateLimit(
+            req,
+            '/api/auth/forgot-password',
+            5,
+            60 * 60 * 1000,
+            'Prea multe cereri de resetare parolă. Încearcă din nou într-o oră.'
+        );
+        if (limited) return limited;
+
         const user = await getUserByEmail(email);
         if (!user) {
-            // Return success even if user doesn't exist (security best practice)
-            // This prevents email enumeration attacks
             return NextResponse.json({
                 success: true,
                 message:
@@ -30,10 +36,8 @@ export async function POST(req: Request) {
             });
         }
 
-        // Generate reset token
         const resetToken = generateResetToken();
 
-        // Save reset token to database
         const { success, error } = await setPasswordResetToken(
             user.id,
             resetToken
@@ -46,7 +50,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Send password reset email
         const emailResult = await sendPasswordResetEmail({
             email: user.email,
             firstName: user.first_name,

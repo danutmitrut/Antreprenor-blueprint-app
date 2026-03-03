@@ -35,9 +35,6 @@ export default function LoginPage() {
                 throw new Error(data.error || 'Eroare la autentificare');
             }
 
-            // Save JWT token to localStorage
-            localStorage.setItem('auth_token', data.token);
-
             // Redirect to dashboard
             router.push('/dashboard');
         } catch (err: any) {

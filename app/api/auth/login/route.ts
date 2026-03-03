@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getUserByEmail, verifyPassword, generateToken } from '@/lib/auth';
+import {
+    generateToken,
+    getAuthCookieName,
+    getAuthCookieOptions,
+    getUserByEmail,
+    verifyPassword,
+} from '@/lib/auth';
+import { enforceRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
     try {
         const { email, password } = await req.json();
 
-        // Validation
         if (!email || !password) {
             return NextResponse.json(
                 { error: 'Email și parola sunt obligatorii' },
@@ -13,7 +19,15 @@ export async function POST(req: Request) {
             );
         }
 
-        // Get user
+        const limited = await enforceRateLimit(
+            req,
+            '/api/auth/login',
+            10,
+            15 * 60 * 1000,
+            'Prea multe încercări de autentificare. Încearcă din nou în 15 minute.'
+        );
+        if (limited) return limited;
+
         const user = await getUserByEmail(email);
         if (!user) {
             return NextResponse.json(
@@ -22,7 +36,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Verify password
         const isValid = await verifyPassword(password, user.password_hash);
         if (!isValid) {
             return NextResponse.json(
@@ -31,16 +44,16 @@ export async function POST(req: Request) {
             );
         }
 
-        // Generate JWT token
-        const token = generateToken({
-            userId: user.id,
-            email: user.email,
-        });
+        const token = generateToken(
+            {
+                userId: user.id,
+                email: user.email,
+            },
+            user.password_hash
+        );
 
-        // Return user data and token
-        return NextResponse.json({
+        const response = NextResponse.json({
             success: true,
-            token,
             user: {
                 id: user.id,
                 email: user.email,
@@ -49,6 +62,9 @@ export async function POST(req: Request) {
                 email_verified: user.email_verified,
             },
         });
+
+        response.cookies.set(getAuthCookieName(), token, getAuthCookieOptions());
+        return response;
     } catch (error: any) {
         console.error('Login error:', error);
         return NextResponse.json(

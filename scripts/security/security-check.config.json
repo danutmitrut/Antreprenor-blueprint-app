@@ -1,0 +1,60 @@
+{
+  "ignoreDirs": [
+    ".git",
+    "node_modules",
+    ".next",
+    "dist",
+    "build",
+    "coverage",
+    ".turbo",
+    ".vercel",
+    ".cache"
+  ],
+  "textExtensions": [
+    ".js",
+    ".mjs",
+    ".cjs",
+    ".ts",
+    ".tsx",
+    ".jsx",
+    ".json",
+    ".yml",
+    ".yaml",
+    ".toml",
+    ".sql",
+    ".env",
+    ".txt"
+  ],
+  "maxFileSizeBytes": 2000000,
+  "failOn": ["CRITICAL", "HIGH"],
+  "rules": [
+    {
+      "id": "SECRETS_SERVICE_ROLE_IN_REPO",
+      "severity": "CRITICAL",
+      "description": "Service role key assignment detected in repository content.",
+      "regex": "(SUPABASE_SERVICE_ROLE_KEY\\s*[:=]\\s*['\"][A-Za-z0-9_\\-\\.=]{24,}['\"]|service[_-]?role\\s*[:=]\\s*['\"][A-Za-z0-9_\\-\\.=]{24,}['\"])",
+      "flags": "gi"
+    },
+    {
+      "id": "SECRETS_PRIVATE_KEY",
+      "severity": "CRITICAL",
+      "description": "Private key material found in repository content.",
+      "regex": "(BEGIN\\s+(RSA|EC|OPENSSH)\\s+PRIVATE\\s+KEY[\\s\\S]{80,}END\\s+(RSA|EC|OPENSSH)\\s+PRIVATE\\s+KEY)",
+      "flags": "gi"
+    },
+    {
+      "id": "NEXT_PUBLIC_SENSITIVE_NAME",
+      "severity": "HIGH",
+      "description": "Potential sensitive value exposed via NEXT_PUBLIC_* variable name.",
+      "regex": "NEXT_PUBLIC_[A-Z0-9_]*(SECRET|TOKEN|PASSWORD|PRIVATE|SERVICE_ROLE)[A-Z0-9_]*\\s*[:=]\\s*['\"][^'\"]{8,}['\"]",
+      "flags": "g"
+    },
+    {
+      "id": "CORS_WILDCARD_WITH_CREDENTIALS",
+      "severity": "HIGH",
+      "description": "CORS wildcard combined with credentials may expose authenticated data.",
+      "regex": "(origin\\s*:\\s*['\"]\\*['\"]|Access-Control-Allow-Origin['\"]?\\s*:\\s*['\"]\\*['\"])[\\s\\S]{0,220}(credentials\\s*:\\s*true|Access-Control-Allow-Credentials)",
+      "flags": "gi"
+    }
+  ]
+}

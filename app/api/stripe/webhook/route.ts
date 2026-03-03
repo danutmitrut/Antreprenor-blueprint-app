@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import { hashPassword, generateVerificationToken, generateResetToken, setPasswordResetToken } from '@/lib/auth';
+import { hashPassword, generateResetToken, setPasswordResetToken } from '@/lib/auth';
 import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
@@ -66,7 +66,6 @@ export async function POST(req: Request) {
                     // Generate random password (user can reset it later)
                     const randomPassword = crypto.randomUUID();
                     const password_hash = await hashPassword(randomPassword);
-                    const email_verification_token = generateVerificationToken();
 
                     // Split full name into first and last name
                     const fullName = session.metadata?.full_name || session.customer_details.name || '';
@@ -82,7 +81,6 @@ export async function POST(req: Request) {
                             password_hash,
                             first_name,
                             last_name,
-                            email_verification_token,
                             stripe_customer_id: session.customer as string,
                             email_verified: true, // Auto-verify since they paid
                         })

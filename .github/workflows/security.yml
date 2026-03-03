@@ -1,0 +1,43 @@
+name: security-check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: App security gate
+        run: npm run security:check
+
+      - name: OSV dependency scan
+        uses: google/osv-scanner-action/osv-scanner-action@v2.3.3
+        with:
+          scan-args: |-
+            --recursive
+            .
+
+      - name: Gitleaks secret scan
+        uses: gacts/gitleaks@v1
+        with:
+          config-path: gitleaks.toml

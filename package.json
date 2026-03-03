@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "security:check": "node scripts/security/security-check.mjs --config scripts/security/security-check.config.json",
+    "security:check:json": "node scripts/security/security-check.mjs --format=json --config scripts/security/security-check.config.json"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.45",

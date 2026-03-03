@@ -1,11 +1,14 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createHash, randomBytes } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 
 // Environment variables validation
 const JWT_SECRET = process.env.JWT_SECRET;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const AUTH_COOKIE_NAME = 'abs_auth';
+const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 
 if (!JWT_SECRET) {
     throw new Error('Missing JWT_SECRET environment variable');
@@ -17,6 +20,57 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 // Supabase client with service role (bypasses RLS)
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+function buildSessionFingerprint(passwordHash: string): string {
+    return createHash('sha256').update(passwordHash).digest('hex').slice(0, 24);
+}
+
+function hashOpaqueToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+}
+
+function extractCookieValue(cookieHeader: string | null, name: string): string | null {
+    if (!cookieHeader) return null;
+
+    for (const part of cookieHeader.split(';')) {
+        const [rawName, ...rest] = part.trim().split('=');
+        if (rawName === name) {
+            return decodeURIComponent(rest.join('='));
+        }
+    }
+
+    return null;
+}
+
+export function getAuthCookieName(): string {
+    return AUTH_COOKIE_NAME;
+}
+
+export function getAuthCookieOptions() {
+    return {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax' as const,
+        path: '/',
+        maxAge: AUTH_COOKIE_MAX_AGE,
+    };
+}
+
+export function getExpiredAuthCookieOptions() {
+    return {
+        ...getAuthCookieOptions(),
+        maxAge: 0,
+    };
+}
+
+export function getAuthTokenFromRequest(req: Request): string | null {
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+        return authHeader.substring(7);
+    }
+
+    return extractCookieValue(req.headers.get('cookie'), AUTH_COOKIE_NAME);
+}
 
 // =====================================================
 // PASSWORD UTILITIES
@@ -47,15 +101,28 @@ export async function verifyPassword(
 export interface JWTPayload {
     userId: string;
     email: string;
+    sessionFingerprint: string;
+    iat?: number;
+    exp?: number;
 }
 
 /**
  * Generate a JWT token for a user
  */
-export function generateToken(payload: JWTPayload): string {
-    return jwt.sign(payload, JWT_SECRET!, {
-        expiresIn: '7d', // Token expires in 7 days
-    });
+export function generateToken(
+    payload: Omit<JWTPayload, 'sessionFingerprint' | 'iat' | 'exp'>,
+    passwordHash: string
+): string {
+    return jwt.sign(
+        {
+            ...payload,
+            sessionFingerprint: buildSessionFingerprint(passwordHash),
+        },
+        JWT_SECRET!,
+        {
+            expiresIn: '7d',
+        }
+    );
 }
 
 /**
@@ -79,14 +146,14 @@ export function verifyToken(token: string): JWTPayload | null {
  * Generate a random token for password reset
  */
 export function generateResetToken(): string {
-    return crypto.randomUUID();
+    return randomBytes(32).toString('hex');
 }
 
 /**
  * Generate a random token for email verification
  */
 export function generateVerificationToken(): string {
-    return crypto.randomUUID();
+    return randomBytes(32).toString('hex');
 }
 
 // =====================================================
@@ -157,16 +224,39 @@ export async function getUserById(userId: string): Promise<User | null> {
     return data as User;
 }
 
+export async function authenticateRequest(req: Request): Promise<{
+    token: string;
+    payload: JWTPayload;
+    user: User;
+} | null> {
+    const token = getAuthTokenFromRequest(req);
+    if (!token) return null;
+
+    const payload = verifyToken(token);
+    if (!payload) return null;
+
+    const user = await getUserById(payload.userId);
+    if (!user) return null;
+
+    if (payload.sessionFingerprint !== buildSessionFingerprint(user.password_hash)) {
+        return null;
+    }
+
+    return { token, payload, user };
+}
+
 /**
  * Get user by password reset token
  */
 export async function getUserByResetToken(
     token: string
 ): Promise<User | null> {
+    const hashedToken = hashOpaqueToken(token);
+
     const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('password_reset_token', token)
+        .eq('password_reset_token', hashedToken)
         .single();
 
     if (error) {
@@ -188,19 +278,14 @@ export async function createUser(userData: {
     stripe_customer_id?: string;
 }): Promise<{ user: User | null; error: string | null }> {
     try {
-        // Check if user already exists
         const existingUser = await getUserByEmail(userData.email);
         if (existingUser) {
             return { user: null, error: 'Email already exists' };
         }
 
-        // Hash password
         const password_hash = await hashPassword(userData.password);
+        const email_verification_token = hashOpaqueToken(generateVerificationToken());
 
-        // Generate email verification token
-        const email_verification_token = generateVerificationToken();
-
-        // Create user
         const { data, error } = await supabase
             .from('users')
             .insert({
@@ -265,13 +350,13 @@ export async function setPasswordResetToken(
     token: string
 ): Promise<{ success: boolean; error: string | null }> {
     try {
-        // Token expires in 1 hour
         const expires = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        const hashedToken = hashOpaqueToken(token);
 
         const { error } = await supabase
             .from('users')
             .update({
-                password_reset_token: token,
+                password_reset_token: hashedToken,
                 password_reset_expires: expires,
             })
             .eq('id', userId);
@@ -295,13 +380,15 @@ export async function verifyUserEmail(
     token: string
 ): Promise<{ success: boolean; error: string | null }> {
     try {
+        const hashedToken = hashOpaqueToken(token);
+
         const { data, error } = await supabase
             .from('users')
             .update({
                 email_verified: true,
                 email_verification_token: null,
             })
-            .eq('email_verification_token', token)
+            .eq('email_verification_token', hashedToken)
             .select()
             .single();
 
@@ -344,7 +431,6 @@ export async function hasActiveSubscription(userId: string): Promise<boolean> {
     const subscription = await getUserSubscription(userId);
     if (!subscription) return false;
 
-    // Check if subscription is still valid
     const now = new Date();
     const periodEnd = new Date(subscription.current_period_end);
 
