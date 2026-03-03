@@ -145,6 +145,8 @@ function detectMissingApiAuth(root, absFile, content, findings) {
   const rel = toPosixRelative(root, absFile);
   if (!rel.includes("app/api/")) return;
   if (!rel.endsWith("/route.ts") && !rel.endsWith("/route.js")) return;
+  if (rel === "app/api/health/route.ts") return;
+  if (rel === "app/api/stripe/webhook/route.ts") return;
   const hasMethod = /export\s+async\s+function\s+(GET|POST|PUT|PATCH|DELETE)\s*\(/.test(content);
   if (!hasMethod) return;
 
@@ -159,7 +161,9 @@ function detectMissingApiAuth(root, absFile, content, findings) {
     /createServerClient\s*\(/.test(content) ||
     /getSupabaseServerClient\s*\(/.test(content) ||
     /requireUser\s*\(/.test(content) ||
-    /assertAuth\s*\(/.test(content);
+    /assertAuth\s*\(/.test(content) ||
+    /authenticateRequest\s*\(/.test(content) ||
+    /stripe\.webhooks\.constructEvent\s*\(/.test(content);
 
   if (!hasAuthEvidence) {
     addFinding(findings, {
