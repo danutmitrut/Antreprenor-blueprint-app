@@ -13,12 +13,20 @@ paths = [
   '''(?i)^\.codex/''',
   '''(?i)^CHANGELOG\.md$''',
   '''(?i)^LEARNING_HISTORY\.md$''',
-  '''(?i)^DEVELOPMENT_HISTORY\.md$'''
+  '''(?i)^DEVELOPMENT_HISTORY\.md$''',
+  '''(?i)^CURS_VIBE_CODING_CURRICULUM\.md$''',
+  '''(?i)^UNIVERSAL_WORKFLOW\.md$''',
+  '''(?i)^SESSION_2025-01-23_DEPLOYMENT\.md$'''
 ]
 regexTarget = "line"
 regexes = [
   '''(?i)(example|sample|placeholder|changeme|dummy|fake|mock|test[_-]?key)''',
-  '''(?i)SUPABASE_(ANON|SERVICE_ROLE)_KEY\s*=\s*["']?(your|example|placeholder|dummy|test)'''
+  '''(?i)SUPABASE_(ANON|SERVICE_ROLE)_KEY\s*=\s*["']?(your|example|placeholder|dummy|test)''',
+  '''(?i)process\.env\.SUPABASE_SERVICE_ROLE_KEY''',
+  '''(?i)sk_live_abc123''',
+  '''(?i)abc123xyz789''',
+  '''(?i)eyJxxx''',
+  '''(?i)re_xxx'''
 ]
 
 [[rules]]
@@ -37,6 +45,16 @@ paths = [
 ]
 regexes = [
   '''(?i)(example|placeholder|your[_-]?key|changeme|dummy|test)'''
+]
+
+[[rules.allowlists]]
+description = "Allow server-side env references"
+paths = [
+  '''(?i)^lib/auth\.ts$''',
+  '''(?i)^lib/rate-limit\.ts$'''
+]
+regexes = [
+  '''(?i)process\.env\.SUPABASE_SERVICE_ROLE_KEY'''
 ]
 
 [[rules]]
